@@ -1,0 +1,31 @@
+{
+  "name": "@tutor/rethinkdb-database",
+  "version": "0.1.1",
+  "description": "Persistent implementation of a rethink database.",
+  "main": "./lib/db.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "node node_modules/gulp/bin/gulp.js"
+  },
+  "devDependencies": {
+    "gulp": "~3.8.11",
+    "gulp-coffee": "^2.3.1",
+    "gulp-plumber": "^1.0.1",
+    "gulp-util": "^3.0.6",
+    "gulp-watch": "^4.3.3",
+    "mocha": "^2.2.5",
+    "vinyl-source-stream": "~1.0.0"
+  },
+  "repository": "github:Welfenlab/tutor-rethinkdb-database",
+  "contributors": [
+    "Maximilian Klein <dasmaxl@gmail.com> (https://github.com/LittleHelicase)",
+    "Maik Marschner (https://github.com/leMaik)",
+    "Tim Ebbeke (https://github.com/5cript)"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^3.10.0",
+    "moment": "^2.10.3",
+    "rethinkdb": "^2.1.0"
+  }
+}
