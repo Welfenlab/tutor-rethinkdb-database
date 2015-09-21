@@ -1,4 +1,10 @@
 module.exports = (config) ->
-  DB = (require './rethink_db')(config)
+  #DB = (require './rethink_db')(config)
+
+  rdb = require 'rethinkdb'
+
   # auto return
-  Student: (require './student_queries')(DB)
+  rdb.connect(config.database).then (con) ->
+    con.use config.database.name
+
+    require './api'
