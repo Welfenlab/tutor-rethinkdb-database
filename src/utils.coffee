@@ -3,6 +3,12 @@ _ = require 'lodash'
 rdb = require 'rethinkdb'
 rdbSetup = require 'rethinkdb-setup'
 
+tables =
+  Exercises: "id"
+  Solutions: ["id","exercise","group"]
+  Users: "id"
+  Groups: ["id", {name: "users", options: multi: true}, {name: "pendingUsers", options: multi: true} ]
+
 module.exports =
   toArray: (promise) ->
     promise.then (cursor) ->
@@ -11,6 +17,16 @@ module.exports =
   first: (promise) ->
     promise.then (cursor) ->
       cursor.next()
+
+  firstAndCheck: (promise) ->
+    promise.then (cursor) ->
+      cursor.toArray().then (arr) ->
+        new Promise (resolve, reject) ->
+          if arr.length > 1
+            reject "Expected exactly one result, but got more"
+          else
+            resolve arr[0]
+
 
   failIfNoUpdate: (promise) ->
     promise.then (cursor) ->
@@ -45,10 +61,7 @@ module.exports =
   init: (con, config) ->
     config =
       db: config.db
-      tables:
-        Exercises: "id"
-        Solutions: ["id","exercise","group"]
-        Users: "id"
+      tables: tables
     new Promise (resolve, reject) ->
       rdbSetup.setup con, config, (err) ->
         if err
@@ -59,10 +72,7 @@ module.exports =
   empty: (con, config) ->
     config =
       db: config.db
-      tables:
-        Exercises: "id"
-        Solutions: ["id","exercise","group"]
-        Users: "id"
+      tables: tables
     new Promise (resolve, reject) ->
       rdbSetup.empty con, config, (err) ->
         if err
