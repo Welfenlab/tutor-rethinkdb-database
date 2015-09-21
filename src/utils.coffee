@@ -8,6 +8,7 @@ tables =
   Solutions: ["id","exercise","group"]
   Users: "id"
   Groups: ["id", {name: "users", options: multi: true}, {name: "pendingUsers", options: multi: true} ]
+  Tutors: "name"
 
 module.exports =
   toArray: (promise) ->

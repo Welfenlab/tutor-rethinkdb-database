@@ -3,3 +3,4 @@ module.exports = (con) ->
   Exercises: (require './exercises')(con)
   Users: (require './users')(con)
   Groups: (require './groups')(con)
+  Manage: (require './manage')(con)
