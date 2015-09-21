@@ -19,6 +19,14 @@ module.exports =
     promise.then (cursor) ->
       cursor.next()
 
+  firstOrEmpty: (promise) ->
+    promise.then (cursor) ->
+      cursor.toArray().then (arr) ->
+        if arr.length == 0
+          return null
+        else
+          return arr[0]
+
   firstAndCheck: (promise) ->
     promise.then (cursor) ->
       cursor.toArray().then (arr) ->
@@ -48,6 +56,11 @@ module.exports =
     promise.then (cursor) ->
       new Promise (resolve) ->
         resolve cursor != null
+
+  nonEmptyList: (promise) ->
+    promise.then (cursor) ->
+      cursor.toArray().then (arr) ->
+        arr.length != 0
 
   getFirstKey: (key, promise) ->
     promise.then (cursor) ->
