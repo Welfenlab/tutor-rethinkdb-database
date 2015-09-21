@@ -3,18 +3,21 @@ var rdb = require("rethinkdb");
 var cuid = require("cuid");
 var rdbAPI = require("../lib/api");
 var utils = require("../lib/utils");
-var con = null;
+
+var conData = {con:null, dbName: null};
 
 var newDb = function(cb){
+  var con = conData.con;
   // create a random unique name
-  var dbName = "TutorTest_"+cuid();
+  var dbName = conData.dbName || "TutorTest_"+cuid();
+  conData.dbName = dbName;
   // should probably be configurable..
   var config = {host:"localhost", port:"28015",db:dbName};
 
   // to chain promises easierly
   var p = function(fn){ return function(){return fn();}};
   var cleanup = function(){
-    return rdb.dbDrop(dbName).run(con);
+    return utils.empty(con, config);
   };
   var createDb = function(){
     return rdb.dbCreate(dbName).run(con)
@@ -34,9 +37,10 @@ var newDb = function(cb){
   if(!con){
     return rdb.connect(config).then(function(conn){
       con = conn;
+      conData.con = con;
     }).then(p(createDb)).then(p(initDb)).then(p(startTest));
   } else {
-    return createDb().then(p(initDb)).then(p(startTest));
+    return startTest();
   }
 }
 
@@ -44,29 +48,31 @@ module.exports = {
   beforeTest: function(data){
     return function(done){
       this.timeout(25000);
-      newDb(function(api, loadFunc, cleanupFunc){
-        data.db = api;
-        data.load = loadFunc;
-        data.cleanup = cleanupFunc;
+      if(!data.db){
+        newDb(function(api, loadFunc, cleanupFunc){
+          data.db = api;
+          data.load = loadFunc;
+          data.cleanup = cleanupFunc;
+          done();
+        });
+      } else {
         done();
-      });
+      }
     };
   },
   afterTest: function(data){
     return function(){
       this.timeout(12000);
       var cPromise = data.cleanup();
-      data.cleanup = null;
-      data.db = null;
-      data.load = null;
       return cPromise;
     };
   },
   closeConnection: function(){
-    if(con){
-      conPromise = con.close();
-      con = null;
-      return conPromise
+    if(conData.con){
+      return rdb.dbDrop(conData.dbName).run(conData.con).then(function(){
+        conData.con.close();
+        conData.con = null;
+      });
     }
   }
 }

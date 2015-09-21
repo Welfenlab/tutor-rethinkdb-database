@@ -11,6 +11,7 @@ var _ = require("lodash");
 var moment = require("moment");
 var testUtils = require("./test_utils");
 
+
 after(function(){
   return testUtils.closeConnection();
 });
@@ -88,14 +89,12 @@ describe("Corretion methods", function(){
       });
     });
   });
-
   it("should fail if no exercise could be locked", function(){
     return test.load({Solutions: [{exercise:1, group:1, result:[]},{exercise:2,group:2}]})
     .then(function(){
       return test.db.Corrections.lockNextSolutionForTutor(3,"tutor").should.be.rejected;
     });
   });
-
   it("has a method returning the correction status of all exercises", function(){
     return test.load({Solutions:[
       {exercise: 1, group: 1, results:[]},

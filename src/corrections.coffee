@@ -68,7 +68,7 @@ module.exports = (con) ->
       )).run(con)
 
     lockNextSolutionForTutor: (exercise_id, tutor) ->
-      utils.toArray(rdb.table("Solutions")
+      utils.failIfNoUpdate(rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
         .filter( (doc) ->
           isFree(doc)).sample(1).update({lock:tutor}).run(con))

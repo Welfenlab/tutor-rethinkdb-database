@@ -10,6 +10,7 @@ var rdb = require("rethinkdb");
 var moment = require("moment");
 var testUtils = require("./test_utils");
 
+
 after(function(){
   return testUtils.closeConnection();
 });
