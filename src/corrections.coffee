@@ -55,6 +55,16 @@ module.exports = (con) ->
     getResultsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).run(con)
 
+    getResultForExercise: (id) ->
+      rdb.table("Solutions").get(id).run(con)
+
+    setResultForExercise: (tutor, id, result) ->
+      rdb.table("Solutions").get(id).do( (doc) ->
+        rdb.branch(doc.hasFields("lock").and(doc("lock").eq(tutor)),
+          rdb.table("Solutions").get(id).update({result: result}),
+          rdb.error("Only locked solutions can be updated")
+        )).run(con)
+
     getSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).without("results").run(con)
 

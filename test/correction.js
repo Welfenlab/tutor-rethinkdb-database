@@ -51,6 +51,29 @@ describe("Corretion methods", function(){
       });
     });
   });
+  it("should be possible to store results for a locked solution", function(){
+    return test.load({Solutions:[{id:1, lock:"tutor"}]})
+    .then(function(){
+      return test.db.Corrections.setResultForExercise("tutor",1,["res"]).then(function(){
+        return test.db.Corrections.getResultForExercise(1).then(function(sol){
+          (sol == null).should.be.false;
+          sol.result.should.deep.equal(["res"]);
+        })
+      });
+    });
+  });
+  it("should not be possible to store results for a not locked solution", function(){
+    return test.load({Solutions:[{id:1}]})
+    .then(function(){
+      return test.db.Corrections.setResultForExercise("tutor",1,["res"]).should.be.rejected;
+    });
+  });
+  it("should not be possible to store results for a solution locked by another tutor", function(){
+    return test.load({Solutions:[{id:1, lock:"tutor2"}]})
+    .then(function(){
+      return test.db.Corrections.setResultForExercise("tutor",1,["res"]).should.be.rejected;
+    });
+  });
   /*
   it("should lock a solution for a tutor", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1},{exercise:2,group:2}]})
