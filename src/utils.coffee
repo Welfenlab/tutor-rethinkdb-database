@@ -37,11 +37,11 @@ module.exports =
             resolve arr[0]
 
 
-  failIfNoUpdate: (promise) ->
+  failIfNoUpdate: (promise, err) ->
     promise.then (cursor) ->
       new Promise (resolve, reject) ->
         if cursor.replaced == 0
-          reject "Already locked by another tutor"
+          reject err
         else
           resolve()
 

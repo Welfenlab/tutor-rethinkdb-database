@@ -51,38 +51,39 @@ describe("Corretion methods", function(){
       });
     });
   });
+  /*
   it("should lock a solution for a tutor", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockSolutionForTutor(1,1,"tutor").should.be.fulfilled;
+      return test.db.Corrections.lockSolutionForTutor("tutor",1).should.be.fulfilled;
     });
   });
   it("locking a solution twice should have no effect", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockSolutionForTutor(1,"tutor").then(function(){
-        return test.db.Corrections.lockSolutionForTutor(1,"tutor");
+      return test.db.Corrections.lockSolutionForTutor("tutor",1).then(function(){
+        return test.db.Corrections.lockSolutionForTutor("tutor",1);
       }).should.be.fulfilled;
     })
   });
   it("should not be able to lock a solution by two different tutors", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockSolutionForTutor(1,"tutor").then(function(){
-        return test.db.Corrections.lockSolutionForTutor(1,"tutor2")
+      return test.db.Corrections.lockSolutionForTutor("tutor",1).then(function(){
+        return test.db.Corrections.lockSolutionForTutor("tutor2",1)
       }).should.be.rejected;
     });
   });
   it("solutions with results cannot be locked", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1,results:[]},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockSolutionForTutor(1,"tutor").should.be.rejected;
+      return test.db.Corrections.lockSolutionForTutor("tutor",1).should.be.rejected;
     });
-  });
+  });*/
   it("should lock a random not corrected solution", function(){
     return test.load({Solutions: [{exercise:1, group:1, results:[]},{exercise:1,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockNextSolutionForTutor(1,"tutor").then(function(){
+      return test.db.Corrections.lockNextSolutionForTutor("tutor",1).then(function(){
         return test.db.Corrections.getSolutionsForGroup(2).then(function(sol){
           sol[0].lock.should.equal("tutor");
         });
@@ -92,7 +93,7 @@ describe("Corretion methods", function(){
   it("should fail if no exercise could be locked", function(){
     return test.load({Solutions: [{exercise:1, group:1, result:[]},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockNextSolutionForTutor(3,"tutor").should.be.rejected;
+      return test.db.Corrections.lockNextSolutionForTutor("tutor",3).should.be.rejected;
     });
   });
   it("has a method returning the correction status of all exercises", function(){

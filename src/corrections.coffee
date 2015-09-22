@@ -14,6 +14,13 @@ module.exports = (con) ->
       doc.hasFields("results").not().and(
         doc.hasFields("lock").not().or(doc("lock").eq("")))
 
+  lockSolutionForTutor = (tutor, id) ->
+    rdb.do(rdb.table("Solutions").get(id), (doc) ->
+      rdb.branch(isFree(doc,tutor),
+        rdb.table("Solutions").get(id).update(lock:tutor),
+        rdb.error "Solution (ID #{id}) is already locked"
+    )).run(con)
+
   API =
     # returns for every active exercise how many are worked on / not corrected
     # and already corrected
@@ -60,18 +67,11 @@ module.exports = (con) ->
         .filter (s) -> return s('lock').ne ""
         .without("results").run(con)
 
-    lockSolutionForTutor: (id, tutor) ->
-      rdb.do(rdb.table("Solutions").get(id), (doc) ->
-        rdb.branch(isFree(doc,tutor),
-          rdb.table("Solutions").get(id).update(lock:tutor),
-          rdb.error "Solution (ID #{id}) is already locked"
-      )).run(con)
-
-    lockNextSolutionForTutor: (exercise_id, tutor) ->
+    lockNextSolutionForTutor: (tutor, exercise_id) ->
       utils.failIfNoUpdate(rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
         .filter( (doc) ->
-          isFree(doc)).sample(1).update({lock:tutor}).run(con))
+          isFree(doc)).sample(1).update({lock:tutor}).run(con), "Already locked by another tutor")
 
     getNumPending: (exercise_id) ->
       rdb.table("Solutions").filter( (doc) ->
