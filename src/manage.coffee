@@ -7,8 +7,8 @@ utils = require './utils'
 
 module.exports = (con) ->
 
-  storeTutor: (name, pw_hash) ->
-    (rdb.table("Tutors").insert {name: name, pw:pw_hash}, conflict: "update").run con
+  storeTutor: (name, pw_hash, salt) ->
+    (rdb.table("Tutors").insert {name: name, pw:pw_hash, salt: salt}, conflict: "update").run con
 
   storeExercise: (exercise) ->
     (rdb.table("Exercises").insert exercise, conflict: "update").run con

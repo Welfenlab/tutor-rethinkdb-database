@@ -2,6 +2,7 @@
 _ = require 'lodash'
 rdb = require 'rethinkdb'
 utils = require './utils'
+rndString = require 'randomstring'
 
 
 module.exports = (con) ->
@@ -22,3 +23,17 @@ module.exports = (con) ->
 
   getPseudonymList: ->
     utils.getAllKeys "pseudonym", rdb.table('Users').get(id).pluck('pseudonym').run(con)
+
+  getTutor: (name) ->
+    (rdb.table('Tutors').get(name).run(con)).then (tutor) ->
+      if !tutor
+        return name: name, salt: rndString.generate()
+      else
+        delete tutor.pw
+        return tutor
+
+  authTutor: (name, pw_hash) ->
+    (rdb.table('Tutors').get(name).run(con)).then (tutor) ->
+      if tutor and tutor.pw == pw_hash
+        return true
+      return false

@@ -24,7 +24,7 @@ describe("Managing methods", function(){
   afterEach(testUtils.afterTest(test));
 
   it("should create a new tutor", function(){
-    return test.db.Manage.storeTutor("t","ABC").then(function(){
+    return test.db.Manage.storeTutor("t","ABC","SALT").then(function(){
       return test.db.Manage.listTutors().then(function(tutors){
         tutors.should.have.length(1);
         tutors[0].name.should.equal("t");
@@ -34,7 +34,7 @@ describe("Managing methods", function(){
   it("should update an existing tutor", function(){
     return test.load({Tutors:[{name:"t",pw:"BCD"}]})
     .then(function(){
-      return test.db.Manage.storeTutor("t","ABC").then(function(){
+      return test.db.Manage.storeTutor("t","ABC","SALT").then(function(){
         return test.db.Manage.listTutors().then(function(tutors){
           tutors.should.have.length(1);
           tutors[0].name.should.equal("t");
