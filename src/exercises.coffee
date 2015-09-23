@@ -44,7 +44,14 @@ module.exports = (con) ->
     getExerciseSolution: (user_id, exercise_id) ->
       (Group.getGroupForUser(user_id)).then (group) ->
         utils.firstOrEmpty(rdb.table("Solutions").getAll(group.id, index:"group")
-          .filter( (doc) -> doc("exercise").eq(exercise_id)).run(con))
+          .filter( (doc) -> doc("exercise").eq(exercise_id)).run(con)).then (sol) ->
+            if !sol
+              return null
+            if sol.inProcess
+              delete sol.lock
+              delete sol.results
+            delete sol.inProcess
+            return sol
 
     setExerciseSolution: (user_id, exercise_id, solution) ->
       (API.isActive exercise_id).then (active) ->

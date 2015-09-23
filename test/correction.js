@@ -113,15 +113,56 @@ describe("Corretion methods", function(){
       });
     });
   });
+  it("should mark a newly locked solution as 'inProcess'", function(){
+    return test.load({Solutions: [{exercise:1,group:2}]})
+    .then(function(){
+      return test.db.Corrections.lockNextSolutionForTutor("tutor",1).then(function(sol){
+        sol.inProcess.should.be.true;
+      });
+    });
+  });
   it("should fail if no exercise could be locked", function(){
     return test.load({Solutions: [{exercise:1, group:1, result:[]},{exercise:2,group:2}]})
     .then(function(){
       return test.db.Corrections.lockNextSolutionForTutor("tutor",3).should.be.rejected;
     });
   });
+  it("should finalize a solution by setting the 'inProcess' marker to false", function(){
+    return test.load({Solutions: [{id:1,results:[],lock:"tutor",inProcess:true}]})
+    .then(function(){
+      return test.db.Corrections.finishSolution("tutor",1).then(function(){
+        return test.db.Corrections.getUnfinishedSolutionsForTutor("tutor").then(function(sols){
+          sols.should.have.length(0);
+        });
+      });
+    });
+  });
+
+  it("should not finalize a solution of another tutor", function(){
+    return test.load({Solutions: [{id:1,results:[],lock:"tutor",inProcess:true}]})
+    .then(function(){
+      return test.db.Corrections.finishSolution("tutor2",1).should.be.rejected;
+    });
+  });
+
+  it("should not finalize a solution without results", function(){
+    return test.load({Solutions: [{id:1,lock:"tutor",inProcess:true}]})
+    .then(function(){
+      return test.db.Corrections.finishSolution("tutor2",1).should.be.rejected;
+    });
+  });
+
+  it("should list all unfinished exercises for a tutor", function(){
+    return test.load({Solutions: [{id:1,lock:"tutor",inProcess:true},{id:1,lock:"tutor",inProcess:false}]})
+    .then(function(){
+      return test.db.Corrections.getUnfinishedSolutionsForTutor("tutor").then(function(sols){
+        sols.should.have.length(1);
+      });
+    });
+  });
   it("has a method returning the correction status of all exercises", function(){
     return test.load({Solutions:[
-      {exercise: 1, group: 1, results:[]},
+      {exercise: 1, group: 1,  results:[],lock: "tutor",inProcess:false},
       {exercise: 1, group: 2},
       {exercise: 2, group: 1},
       {exercise: 2, group: 2, lock:"tutor"}
@@ -130,7 +171,7 @@ describe("Corretion methods", function(){
       return test.db.Corrections.getStatus().then(function(status){
         status.should.have.length(2);
         bareStatus = _.map(status, function(s) { delete s.id; return s });
-        status.should.deep.include.members([{exercise:1,solutions:2,corrected:1,locked:0},
+        status.should.deep.include.members([{exercise:1,solutions:2,corrected:1,locked:1},
               {exercise:2,solutions:2,corrected:0,locked:1}])
       });
     });

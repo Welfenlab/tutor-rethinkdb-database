@@ -177,6 +177,49 @@ describe("Student Exercise Queries", function(){
     });
   });
 
+  it("should hide unfinished results", function(){
+    return test.load({Solutions:[
+      {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:true,lock:"tutor"}
+    ], Groups: [
+      {id: "A", users: [ 1 ]}
+    ], Users: [
+      {id: 1, pseudonym: 1}
+    ], Exercises: [
+      {id: 1,
+        activationDate: moment().subtract(7,"days").toJSON(),
+        dueDate: moment().add(1, "days").toJSON()}
+    ]})
+    .then(function(){
+      return test.db.Exercises.getExerciseSolution(1,1).then(function(sol){
+        (Array.isArray(sol)).should.be.false;
+        sol.should.not.have.key("results");
+        sol.should.not.have.key("inProcess");
+        sol.should.not.have.key("lock");
+      });
+    });
+  });
+
+  it("should show finished results", function(){
+    return test.load({Solutions:[
+      {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:false}
+    ], Groups: [
+      {id: "A", users: [ 1 ]}
+    ], Users: [
+      {id: 1, pseudonym: 1}
+    ], Exercises: [
+      {id: 1,
+        activationDate: moment().subtract(7,"days").toJSON(),
+        dueDate: moment().add(1, "days").toJSON()}
+    ]})
+    .then(function(){
+      return test.db.Exercises.getExerciseSolution(1,1).then(function(sol){
+        (Array.isArray(sol)).should.be.false;
+        sol.should.have.any.keys("results");
+        sol.should.not.have.key("inProcess");
+      });
+    });
+  });
+
   it("a non existing solution should return an empty object", function(){
     return test.load({Solutions:[
       {group:"B",exercise: 1,solutions:["text","textA"]},

@@ -14,10 +14,16 @@ module.exports = (con) ->
       doc.hasFields("results").not().and(
         doc.hasFields("lock").not().or(doc("lock").eq("")))
 
+  hasResult = (doc) ->
+    doc.hasFields("results")
+
+  isFinalized = (doc) ->
+    doc.hasFields("results").and(doc("inProcess").not())
+
   lockSolutionForTutor = (tutor, id) ->
     rdb.do(rdb.table("Solutions").get(id), (doc) ->
       rdb.branch(isFree(doc,tutor),
-        rdb.table("Solutions").get(id).update(lock:tutor),
+        rdb.table("Solutions").get(id).update(lock:tutor,inProcess:true),
         rdb.error "Solution (ID #{id}) is already locked"
     )).run(con)
 
@@ -30,11 +36,9 @@ module.exports = (con) ->
     getStatus: ->
       (Promise.all [
         (rdb.table("Solutions").group("exercise").count().run(con)),
+        (rdb.table("Solutions").group("exercise").filter(isFinalized).count().run(con)),
         (rdb.table("Solutions").group("exercise").filter((doc) ->
-          doc.hasFields("results")).count().run(con)),
-        (rdb.table("Solutions").group("exercise").filter((doc) ->
-          doc.hasFields("results").not().and(
-            doc.hasFields("lock").and(doc("lock").ne("")))).count().run(con))
+          doc.hasFields("lock").and(doc("lock").ne(""))).count().run(con))
       ]).then (values) ->
         exerciseMap = {}
         _.each values[0], (v) ->
@@ -59,11 +63,18 @@ module.exports = (con) ->
       rdb.table("Solutions").get(id).run(con)
 
     setResultForExercise: (tutor, id, result) ->
-      rdb.table("Solutions").get(id).do( (doc) ->
+      rdb.do(rdb.table("Solutions").get(id), (doc) ->
         rdb.branch(doc.hasFields("lock").and(doc("lock").eq(tutor)),
           rdb.table("Solutions").get(id).update({result: result}),
           rdb.error("Only locked solutions can be updated")
         )).run(con)
+
+    finishSolution: (tutor, id) ->
+      rdb.do(rdb.table("Solutions").get(id), (doc) ->
+        rdb.branch(doc.hasFields("lock").and(doc("lock").eq(tutor).and(doc.hasFields("results"))),
+          rdb.table("Solutions").get(id).update({inProcess:false}),
+          rdb.error "Cannot finish solution, are you missing a result or are not authorized?"
+          )).run(con)
 
     getSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).without("results").run(con)
@@ -74,14 +85,27 @@ module.exports = (con) ->
     getLockedSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
-        .filter (s) -> return s('lock').ne ""
+        .filter (s) -> return s.hasFields('lock').and(s('lock').ne "")
         .without("results").run(con)
 
+    getFinishedSolutionsForTutor: (tutor) ->
+      utils.toArray rdb.table("Solutions").getAll("tutor", {index:"lock"}).filter((doc) ->
+        doc("inProcess").not()).run(con)
+
+    getUnfinishedSolutionsForTutor: (tutor) ->
+      utils.toArray rdb.table("Solutions").getAll("tutor", {index:"lock"}).filter((doc) ->
+        doc("inProcess")).run(con)
+
     lockNextSolutionForTutor: (tutor, exercise_id) ->
-      utils.failIfNoUpdate(rdb.table("Solutions")
+      (rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
-        .filter( (doc) ->
-          isFree(doc)).sample(1).update({lock:tutor}).run(con), "Already locked by another tutor")
+        .filter( (doc) -> isFree(doc)).sample(1).run(con)).then (sol) ->
+          if !sol or sol.length != 1
+            return Promise.reject "Already locked by another tutor"
+          rdb.table("Solutions").get(sol[0].id).update({lock:tutor,inProcess:true}).run(con).then ->
+            sol[0].inProcess = true
+            sol[0].lock = tutor
+            return sol[0]
 
     getNumPending: (exercise_id) ->
       rdb.table("Solutions").filter( (doc) ->
