@@ -13,10 +13,10 @@ module.exports = (con) ->
   API =
     get: ->
       utils.toArray(rdb.table('Exercises').filter( (ex) ->
-        ex('activationDate').lt new Date() ).without(["tasks","solutions"]).run(con))
+        ex('activationDate').lt new Date() ).without("solutions").run(con))
 
     getById: (id)->
-      rdb.table('Exercises').get(id).without(["tasks","solutions"]).run(con).then (e) ->
+      rdb.table('Exercises').get(id).without("solutions").run(con).then (e) ->
         new Promise (resolve, reject) ->
           if (moment().isAfter e.activationDate)
             resolve e
@@ -26,15 +26,7 @@ module.exports = (con) ->
     getAllActive: ->
       utils.toArray(rdb.table('Exercises').filter( (ex) ->
         ex('activationDate').lt(new Date())
-        .and(ex('dueDate').gt new Date()) ).without(["tasks","solutions"]).run(con))
-
-    getDetailed: (id) ->
-      rdb.table('Exercises').get(id).without("solutions").run(con).then (e) ->
-        new Promise (resolve, reject) ->
-          if (moment().isAfter e.activationDate)
-            resolve e
-          else
-            reject "Exercise with id #{id} not found"
+        .and(ex('dueDate').gt new Date()) ).without("solutions").run(con))
 
     isActive: (id) ->
       utils.nonEmptyList(rdb.table("Exercises").getAll(id).filter( (ex) ->

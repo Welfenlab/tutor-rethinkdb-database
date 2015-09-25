@@ -75,7 +75,7 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  it("should hide task information for a normal exercise query by id", function(){
+  it("should hide solution information for a normal exercise query by id", function(){
     return test.load(
     {
       Exercises:[
@@ -85,12 +85,11 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.getById("abc").then(function(ex){
         (Array.isArray(ex)).should.be.false;
         ex.id.should.equal("abc");
-        ex.should.not.have.key("tasks");
         ex.should.not.have.key("solutions");
       });
     });
   });
-  it("should hide task information for a normal exercise query", function(){
+  it("should hide solution information for a normal exercise query", function(){
     return test.load(
     {
       Exercises:[
@@ -100,12 +99,11 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.get().then(function(ex){
         (Array.isArray(ex)).should.be.true;
         ex.should.have.length(1)
-        ex[0].should.not.have.key("tasks");
         ex[0].should.not.have.key("solutions");
       });
     });
   });
-  it("should hide task information for an active-exercise query", function(){
+  it("should hide solution information for an active-exercise query", function(){
     return test.load(
     {
       Exercises:[
@@ -116,45 +114,12 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.getAllActive().then(function(ex){
         (Array.isArray(ex)).should.be.true;
         ex.should.have.length(1)
-        ex[0].should.not.have.key("tasks");
         ex[0].should.not.have.key("solutions");
       });
     });
   });
 
-  it("detailed exercises should hide solution information", function(){
-    return test.load(
-    {
-      Exercises:[
-        {id:"abc",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),
-                  dueDate: rdb.ISO8601(moment().add(2, 'days').toJSON()),tasks:[],solutions:[]}
-      ]
-    }).then(function(){
-      return test.db.Exercises.getDetailed("abc").then(function(ex){
-        (Array.isArray(ex)).should.be.false;
-        ex.should.not.have.key("solutions");
-      });
-    });
-  });
-  it("should be able to get detailed information for an exercise", function(){
-    return test.load(
-    {
-      Exercises:[
-        {id:"abc",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[{id:"a",text:"b"}]},
-        {id:"cde",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON())},
-        {id:"efg",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON())}
-      ]
-    }).then(function(){
-      return test.db.Exercises.getDetailed("abc").then(function(ex){
-        (Array.isArray(ex)).should.be.false;
-        ex.id.should.equal("abc");
-        (Array.isArray(ex.tasks)).should.be.true;
-        ex.tasks.should.have.length(1);
-        ex.tasks[0].text.should.equal("b");
-      });
-    });
-  });
-  it("should be able to get the solution for an exercise", function(){
+  it("should be able to get the users solution for an exercise", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"]},
       {group:2,exercise: 1,solution:["text2","textA2"]},
@@ -177,7 +142,7 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  it("should hide unfinished results", function(){
+  it("should hide unfinished tutor results", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:true,lock:"tutor"}
     ], Groups: [
@@ -199,7 +164,7 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  it("should show finished results", function(){
+  it("should show finished tutor results", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:false}
     ], Groups: [
@@ -220,7 +185,7 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  it("a non existing solution should return an empty object", function(){
+  it("a non existing solution should return null", function(){
     return test.load({Solutions:[
       {group:"B",exercise: 1,solutions:["text","textA"]},
       {group:2,exercise: 1,solutions:["text2","textA2"]},

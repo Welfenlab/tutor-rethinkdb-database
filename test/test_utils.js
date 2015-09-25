@@ -35,6 +35,7 @@ var newDb = function(cb){
       cleanup);
   };
   if(!con){
+    console.log("Initializing RethinkDB... [~ 1 minute]");
     return rdb.connect(config).then(function(conn){
       con = conn;
       conData.con = con;
@@ -47,7 +48,7 @@ var newDb = function(cb){
 module.exports = {
   beforeTest: function(data){
     return function(done){
-      this.timeout(25000);
+      this.timeout(60000);
       if(!data.db){
         newDb(function(api, loadFunc, cleanupFunc){
           data.db = api;
