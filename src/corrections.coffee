@@ -35,6 +35,7 @@ module.exports = (con) ->
     # ]
     getStatus: ->
       (Promise.all [
+        (utils.toArray rdb.table("Exercises").run(con)),
         (rdb.table("Solutions").group("exercise").count().run(con)),
         (rdb.table("Solutions").group("exercise").filter(isFinalized).count().run(con)),
         (rdb.table("Solutions").group("exercise").filter((doc) ->
@@ -42,14 +43,16 @@ module.exports = (con) ->
       ]).then (values) ->
         exerciseMap = {}
         _.each values[0], (v) ->
-          exerciseMap[v.group] =
-            exercise: v.group
-            solutions: v.reduction
+          exerciseMap[v.id] =
+            exercise: v
+            solutions: 0
             corrected: 0
             locked: 0
         _.each values[1], (v) ->
-          exerciseMap[v.group].corrected = v.reduction
+          exerciseMap[v.group].solutions = v.reduction
         _.each values[2], (v) ->
+          exerciseMap[v.group].corrected = v.reduction
+        _.each values[3], (v) ->
           exerciseMap[v.group].locked = v.reduction
         return  _.values(exerciseMap)
 

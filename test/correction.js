@@ -166,13 +166,16 @@ describe("Corretion methods", function(){
       {exercise: 1, group: 2},
       {exercise: 2, group: 1},
       {exercise: 2, group: 2, lock:"tutor"}
+    ],Exercises:[
+      {id: 1, number: 1},
+      {id: 2, number: 2}
     ]})
     .then(function(){
       return test.db.Corrections.getStatus().then(function(status){
         status.should.have.length(2);
         bareStatus = _.map(status, function(s) { delete s.id; return s });
-        status.should.deep.include.members([{exercise:1,solutions:2,corrected:1,locked:1},
-              {exercise:2,solutions:2,corrected:0,locked:1}])
+        status.should.deep.include.members([{exercise:{id: 1, number: 1},solutions:2,corrected:1,locked:1},
+              {exercise:{id: 2, number: 2},solutions:2,corrected:0,locked:1}])
       });
     });
   });
