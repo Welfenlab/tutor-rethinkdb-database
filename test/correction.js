@@ -161,21 +161,46 @@ describe("Corretion methods", function(){
     });
   });
   it("has a method returning the correction status of all exercises", function(){
+    var date = moment().subtract(1, "days").toJSON();
     return test.load({Solutions:[
-      {exercise: 1, group: 1,  results:[],lock: "tutor",inProcess:false},
+      {exercise: 1, group: 1, results:[],lock: "tutor",inProcess:false},
       {exercise: 1, group: 2},
-      {exercise: 2, group: 1},
-      {exercise: 2, group: 2, lock:"tutor"}
+      {exercise: 2, group: 1, lock:"blubb",inProcess:true},
+      {exercise: 2, group: 2}
     ],Exercises:[
-      {id: 1, number: 1},
-      {id: 2, number: 2}
+      {id: 1, activationDate: rdb.ISO8601(date)},
+      {id: 2, activationDate: rdb.ISO8601(date)}
+    ],Tutors: [
+      {name:"tutor", contingent:1}
     ]})
     .then(function(){
-      return test.db.Corrections.getStatus().then(function(status){
+      return test.db.Corrections.getStatus("tutor").then(function(status){
         status.should.have.length(2);
-        bareStatus = _.map(status, function(s) { delete s.id; return s });
-        status.should.deep.include.members([{exercise:{id: 1, number: 1},solutions:2,corrected:1,locked:1},
-              {exercise:{id: 2, number: 2},solutions:2,corrected:0,locked:1}])
+        bareStatus = _.map(status, function(s) { delete s.id; delete s.exercise.activationDate; return s });
+        bareStatus.should.deep.include.members([
+          {
+            exercise:{id: 1},
+            should: 2,
+            is: 1,
+            solutions:2,corrected:1,locked:1
+          },
+          {
+            exercise:{id: 2},
+            should: 2,
+            is: 0,
+            solutions:2,corrected:0,locked:1
+          }]);
+      });
+    });
+  });
+  it("can calculate the contingent for an exercise and tutor", function(){
+    return test.load({Tutors:[{name:"a",contingent:20},{name:"b",contingent:10}],
+      Solutions:[{exercise:1},{exercise:1,lock:"a",inProcess:false},{exercise:1},{exercise:2}]
+    })
+    .then(function(){
+      return test.db.Corrections.getExerciseContingentForTutor("a",1).then(function(contingent){
+        contingent.should.should.equal(2);
+        contingent.is.should.equal(1);
       });
     });
   });

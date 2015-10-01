@@ -27,7 +27,8 @@ module.exports = (con) ->
   getTutor: (name) ->
     (rdb.table('Tutors').get(name).run(con)).then (tutor) ->
       if !tutor
-        return name: name, salt: rndString.generate()
+        reject "Tutor #{name} does not exist"
+        return
       else
         delete tutor.pw
         return tutor

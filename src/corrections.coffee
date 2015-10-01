@@ -27,35 +27,57 @@ module.exports = (con) ->
         rdb.error "Solution (ID #{id}) is already locked"
     )).run(con)
 
+  tutorExerciseStatsQuery = (name, exercise_id) ->
+    rdb.do(
+      rdb.table("Tutors").sum("contingent"),
+      rdb.table("Tutors").filter(name:name).sum("contingent"),
+      rdb.table("Solutions").filter(exercise:exercise_id).count(),
+      rdb.table("Solutions").filter( exercise:exercise_id,lock:name,inProcess:false).count(),
+      (totalContingent, tutorContingent, solutionsCount, tutorSols) ->
+        is: tutorSols
+        should: solutionsCount.mul(tutorContingent).div(totalContingent))
+
   API =
     # returns for every active exercise how many are worked on / not corrected
     # and already corrected
     # [
     #  {exercise: 1, solutions: 100, corrected: 50, locked: 10}
     # ]
-    getStatus: ->
+    getStatus: (name) ->
       (Promise.all [
         (utils.toArray rdb.table("Exercises").run(con)),
+        (rdb.table("Tutors").sum("contingent").run(con)),
+        (rdb.table("Tutors").filter({name:name}).sum("contingent").run(con)),
         (rdb.table("Solutions").group("exercise").count().run(con)),
         (rdb.table("Solutions").group("exercise").filter(isFinalized).count().run(con)),
         (rdb.table("Solutions").group("exercise").filter((doc) ->
-          doc.hasFields("lock").and(doc("lock").ne(""))).count().run(con))
+          doc.hasFields("lock").and(doc("lock").ne(""))).count().run(con)),
+        (rdb.table("Solutions").filter({lock:name,inProcess:false}).group("exercise").count().run(con))
       ]).then (values) ->
+        perc_contingent = values[2] / values[1]
         exerciseMap = {}
         _.each values[0], (v) ->
           exerciseMap[v.id] =
             exercise: v
+            is: 0
+            should: 0
             solutions: 0
             corrected: 0
             locked: 0
-        _.each values[1], (v) ->
-          exerciseMap[v.group].solutions = v.reduction
-        _.each values[2], (v) ->
-          exerciseMap[v.group].corrected = v.reduction
         _.each values[3], (v) ->
+          exerciseMap[v.group].solutions = v.reduction
+          exerciseMap[v.group].should = v.reduction * perc_contingent
+        _.each values[4], (v) ->
+          exerciseMap[v.group].corrected = v.reduction
+        _.each values[5], (v) ->
           exerciseMap[v.group].locked = v.reduction
+        _.each values[6], (v) ->
+          exerciseMap[v.group].is = v.reduction
         return  _.values(exerciseMap)
 
+
+    getExerciseContingentForTutor: (name, exercise_id) ->
+      tutorExerciseStatsQuery(name, exercise_id).run(con)
     # get locked exercise for tutor
 
     # get the list of all results for an exercise

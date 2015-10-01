@@ -87,11 +87,8 @@ describe("User queries", function(){
     });
   });
 
-  it("can query a non existing user without error", function(){
-    return test.db.Users.getTutor("nonExisting").then(function(tutor){
-      tutor.name.should.equal("nonExisting");
-      tutor.should.have.any.key("salt");
-    });
+  it("cannot query a non existing user", function(){
+    return test.db.Users.getTutor("nonExisting").should.be.rejected;
   });
 
   it("can authorize a tutor", function(){
