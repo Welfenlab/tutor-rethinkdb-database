@@ -92,10 +92,27 @@ describe("User queries", function(){
   });
 
   it("can authorize a tutor", function(){
+    var cmpPromise = function(pw){ return new Promise(function(resolve){
+        resolve(pw == "test123");
+      })
+    };
     return test.load({Tutors: [{name: "a", pw:"test123"}]})
     .then(function(){
-      return test.db.Users.authTutor("a", "test123").then(function(isAuthorized){
+      return test.db.Users.authTutor("a", cmpPromise).then(function(isAuthorized){
         isAuthorized.should.be.true;
+      });
+    });
+  });
+
+  it("can reject a tutor", function(){
+    var cmpPromise = function(pw){ return new Promise(function(resolve){
+        resolve(false);
+      })
+    };
+    return test.load({Tutors: [{name: "a", pw:"test123"}]})
+    .then(function(){
+      return test.db.Users.authTutor("a", cmpPromise).then(function(isAuthorized){
+        isAuthorized.should.be.false;
       });
     });
   });

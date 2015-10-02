@@ -33,8 +33,8 @@ module.exports = (con) ->
         delete tutor.pw
         return tutor
 
-  authTutor: (name, pw_hash) ->
+  authTutor: (name, pw_compare) ->
     (rdb.table('Tutors').get(name).run(con)).then (tutor) ->
-      if tutor and tutor.pw == pw_hash
-        return true
+      if tutor
+        return pw_compare tutor.pw
       return false
