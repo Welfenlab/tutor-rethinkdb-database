@@ -107,6 +107,14 @@ module.exports = (con) ->
     getSolutionsForGroup: (group_id) ->
       utils.toArray rdb.table("Solutions").getAll(group_id, {index: "group"}).run(con)
 
+    ###
+    getSolutionsForUser: (name) ->
+      utils.toArray rdb.table("Groups").getAll(name, {index: })
+    ###
+
+    getPDFForID: (id) ->
+      utils.getFirstKey "pdf", rdb.table("Solutions").get(id).run(con)
+
     getLockedSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
