@@ -126,9 +126,9 @@ describe("Student Exercise Queries", function(){
       {group:1,exercise: 2,solution:["text3","textA3"]},
       {group:"A",exercise: 2,solution:["text3","textA3"]}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ],pendingUsers:[]},{id: 1, users: [ 2 ],pendingUsers:[]},{id: 2, users: [ 3 ],pendingUsers:[]}
     ], Users: [
-      {id: 1, pseudonym: 1}
+      {id: 1, pseudonym: "a"},{id: 2, pseudonym: "b"},{id: 3, pseudonym: "c"}
     ], Exercises: [
       {id: 1,
         activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
@@ -146,7 +146,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:true,lock:"tutor"}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -168,7 +168,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"],results:"bla",inProcess:false}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -192,7 +192,7 @@ describe("Student Exercise Queries", function(){
       {group:1,exercise: 2,solutions:["text3","textA3"]},
       {group:"A",exercise: 2,solutions:["text3","textA3"]}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -209,7 +209,7 @@ describe("Student Exercise Queries", function(){
 
   it("should add a solution if there is none", function(){
     return test.load({Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -230,7 +230,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"]}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -252,7 +252,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"]}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [
@@ -269,7 +269,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Solutions:[
       {group:"A",exercise: 1,solution:["text","textA"]}
     ], Groups: [
-      {id: "A", users: [ 1 ]}
+      {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
       {id: 1, pseudonym: 1}
     ], Exercises: [

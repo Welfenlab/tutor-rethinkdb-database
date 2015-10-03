@@ -5,7 +5,7 @@ utils = require './utils'
 rdb = require 'rethinkdb'
 
 
-module.exports = (con) ->
+module.exports = (con, config) ->
   isFree = (doc,tutor) ->
     if tutor
       doc.hasFields("results").not().and(
@@ -36,6 +36,8 @@ module.exports = (con) ->
       (totalContingent, tutorContingent, solutionsCount, tutorSols) ->
         is: tutorSols
         should: solutionsCount.mul(tutorContingent).div(totalContingent))
+
+  Groups = (require './groups')(con,config)
 
   API =
     # returns for every active exercise how many are worked on / not corrected
@@ -100,6 +102,14 @@ module.exports = (con) ->
           rdb.table("Solutions").get(id).update({inProcess:false}),
           rdb.error "Cannot finish solution, are you missing a result or are not authorized?"
           )).run(con)
+
+    getUserSolutions: (user) ->
+      Groups.getGroupForUser(user).then (group) ->
+        utils.toArray (rdb.table("Solutions").filter (s) -> s("group").eq(group.id)).run(con)
+
+    getUserExerciseSolution: (user, exercise_id) ->
+      Groups.getGroupForUser(user).then (group) ->
+        (rdb.table("Solutions").filter(group:group.id,exercise:exercise_id).nth(0)).run(con)
 
     getSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).without("results").run(con)

@@ -37,6 +37,14 @@ describe("Correction methods", function(){
       });
     });
   });
+  it("lists all pending corrections for a tutor", function(){
+    return test.load({Solutions:[{lock:"tutor",inProcess:true},{lock:"tutor"},{lock:"tutor",inProcess:false}]})
+    .then(function(){
+      return test.db.Corrections.getUnfinishedSolutionsForTutor("tutor").then(function(sol){
+        sol.should.have.length(1);
+      });
+    });
+  });
   it("can list all solutions for an exercise", function(){
     return test.load({Solutions:[
       {exercise: 1, group: 1},
@@ -201,6 +209,16 @@ describe("Correction methods", function(){
       return test.db.Corrections.getExerciseContingentForTutor("a",1).then(function(contingent){
         contingent.should.should.equal(2);
         contingent.is.should.equal(1);
+      });
+    });
+  });
+  it("can get a specific solution for a user", function(){
+    return test.load({Solutions: [{id:1,group:1,exercise:1},{id:2,group:1,exercise:2},{id:3,group:2,exercise:2}],
+              Groups: [{id:1,users:[2], pendingUsers:[]}],
+              Users: [{id:2,pseudonym:"B"}]})
+    .then(function(){
+      return test.db.Corrections.getUserExerciseSolution(2,2).then(function(sols){
+        sols.id.should.equal(2);
       });
     });
   });
