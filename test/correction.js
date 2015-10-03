@@ -16,7 +16,7 @@ after(function(){
   return testUtils.closeConnection();
 });
 
-describe("Corretion methods", function(){
+describe("Correction methods", function(){
   var test = {db:null,cleanup:null,load:null};
   // setup a new fresh database for every test!
   beforeEach(testUtils.beforeTest(test));
