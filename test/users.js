@@ -60,18 +60,37 @@ describe("User queries", function(){
     });
   });
   it("should be possible to create a new user", function(){
-    return test.db.Users.create(1,"12345678","P").then(function(){
+    return test.db.Users.create({id:1,matrikel:"12345678",pseudonym:"P",name:"A"}).then(function(){
       return test.db.Users.get(1).then(function(u){
-        u.pseudonym.should.equal("P");
+        u.pseudonym.indexOf("P").should.equal(0);
         u.id.should.equal(1);
         u.matrikel.should.equal("12345678");
       });
     });
   });
-  it("should not be possible to create two users with the same id", function(){
+  it("creating a new user should put the user into a group", function(){
+    return test.db.Users.create({id:1,matrikel:"12345678",pseudonym:"P",name:"A"}).then(function(){
+      return test.db.Groups.getGroupForUser(1).should.be.fulfilled;
+    });
+  });
+  it("creating a new user should create the pseudonym", function(){
+    return test.db.Users.create({id:1,matrikel:"12345678",pseudonym:"P",name:"A"}).then(function(){
+      return test.db.Users.getInternalPseudonymList().then(function(list){
+        list.should.have.length(1);
+      });
+    });
+  });
+  it("creating a user with the same id updates the user", function(){
     return test.load({Users:[{id:1,pseudonym:"P"}]})
     .then(function(){
-      return test.db.Users.create(1,"12345678","Q").should.be.rejected;
+      return test.db.Users.create({id:1,matrikel:"12345678",pseudonym:"Q",name:"A"}).then(function(){
+        return test.db.Users.get(1).then(function(u){
+          u.pseudonym.indexOf("Q").should.equal(0);
+          u.id.should.equal(1);
+          u.matrikel.should.equal("12345678");
+          u.name.should.equal("A");
+        });
+      });
     });
   });
 

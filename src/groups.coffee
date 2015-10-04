@@ -11,7 +11,6 @@ module.exports = (con) ->
     rdb.table("Groups").getAll(user_id, {index: "users"}).replace (doc) ->
       doc.merge users: doc("users").setDifference([user_id])
 
-  Users = require('./users')(con)
 
   pseudonymListToIdList = (plist) ->
     rdb.expr(plist).map((p) -> rdb.table("Users").getAll(p,index:"pseudonym").nth(0)("id"))
@@ -37,10 +36,12 @@ module.exports = (con) ->
       leaveGroup(user_id),
       (grp_users, grp) ->
         rdb.table("Groups").insert users: [user_id], pendingUsers: grp_users.setDifference([user_id])
-    ).run(con).then ->
+    ).run(con).then (res) ->
       desensetizeGroup rdb.table("Groups").getAll(user_id, index:"users").nth(0)
 
-
+  hasGroup: (user_id) ->
+    rdb.table("Groups").getAll(user_id, {index: "users"}).count(0).run(con).then (cnt) ->
+      return cnt != 0
 
   # get the Group of one user
   getGroupForUser: (user_id) ->

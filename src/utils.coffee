@@ -9,6 +9,7 @@ tables =
   Users: ["id","pseudonym"]
   Groups: ["id", {name: "users", options: multi: true}, {name: "pendingUsers", options: multi: true} ]
   Tutors: "name"
+  PseudonymList: ["pseudonym", "user"]
 
 module.exports =
   toArray: (promise) ->

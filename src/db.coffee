@@ -7,4 +7,4 @@ module.exports = (config) ->
   rdb.connect(config.database).then (con) ->
     con.use config.database.name
 
-    require './api'
+    (require './api')(con, config)
