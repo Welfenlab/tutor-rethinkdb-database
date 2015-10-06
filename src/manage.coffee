@@ -10,6 +10,12 @@ module.exports = (con) ->
   storeTutor: (name, pw_hash) ->
     (rdb.table("Tutors").insert {name: name, pw:pw_hash}, conflict: "update").run con
 
+  get: ->
+    utils.toArray(rdb.table('Exercises').run(con))
+
+  getById: (id)->
+    rdb.table('Exercises').get(id).run(con)
+
   storeExercise: (exercise) ->
     (rdb.table("Exercises").insert exercise, conflict: "update").run con
 
