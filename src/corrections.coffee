@@ -153,3 +153,5 @@ module.exports = (con, config) ->
     getNumPending: (exercise_id) ->
       rdb.table("Solutions").filter( (doc) ->
         doc.hasFields("results")).count().run(con)
+
+    lockSolutionForTutor: (tutor, id) -> lockSolutionForTutor(tutor, id)

@@ -70,6 +70,9 @@ describe("Correction methods", function(){
       });
     });
   });
+  //---------------------------------------------------------------------
+  // Locks
+  //---------------------------------------------------------------------
   it("should not be possible to store results for a not locked solution", function(){
     return test.load({Solutions:[{id:1}]})
     .then(function(){
@@ -82,7 +85,6 @@ describe("Correction methods", function(){
       return test.db.Corrections.setResultForExercise("tutor",1,["res"]).should.be.rejected;
     });
   });
-  /*
   it("should lock a solution for a tutor", function(){
     return test.load({Solutions: [{id:1,exercise:1, group:1},{exercise:2,group:2}]})
     .then(function(){
@@ -110,7 +112,8 @@ describe("Correction methods", function(){
     .then(function(){
       return test.db.Corrections.lockSolutionForTutor("tutor",1).should.be.rejected;
     });
-  });*/
+  });
+  //---------------------------------------------------------------------
   it("should lock a random not corrected solution", function(){
     return test.load({Solutions: [{exercise:1, group:1, results:[]},{exercise:1,group:2}]})
     .then(function(){
