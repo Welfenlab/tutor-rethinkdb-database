@@ -79,16 +79,26 @@ describe("Student Exercise Queries", function(){
     return test.load(
     {
       Exercises:[
-        {id:"abc",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[],solutions:[]}
+        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[],solutions:[]}
       ]
     }).then(function(){
-      return test.db.Exercises.getById("abc").then(function(ex){
+      return test.db.Exercises.getById(1).then(function(ex){
         (Array.isArray(ex)).should.be.false;
-        ex.id.should.equal("abc");
+        ex.id.should.equal(1);
         ex.should.not.have.key("solutions");
       });
     });
   });
+
+  it("should not return an unactive exercise by id", function(){
+    return test.load({Exercises:[
+      {activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),id:1},
+      {activationDate: rdb.ISO8601(moment().add(2, 'days').toJSON()),id:2}
+    ]}).then(function() {
+      return test.db.Exercises.getById(2).should.be.rejected;
+    });
+  });
+
   it("should hide solution information for a normal exercise query", function(){
     return test.load(
     {

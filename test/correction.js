@@ -204,6 +204,29 @@ describe("Correction methods", function(){
       });
     });
   });
+
+  it("returns only queried unfinished exercises", function() {
+    return test.load({Solutions: [{id:1,exercise:1,lock:"tutor",inProcess:true},
+                                  {id:2,lock:"tutor",inProcess:false}]})
+    .then(function() {
+      return test.db.Corrections.getUnfinishedSolutionsForTutor("tutor").then(function(sols){
+        sols.should.have.length(1);
+      });
+    });
+  });
+
+  it("has a method that lists all solutions of a user", function(){
+    return test.load({Solutions: [{id:1,group:1,exercise:1}],
+                      Groups: [{id:1,users:[2],pendingUsers:[]}],
+                      Users: [{id:2, pseudonym:"A"}]})
+    .then(function() {
+      return test.db.Corrections.getUserSolutions(2).then(function(sols){
+        sols.should.have.length(1);
+        sols.should.deep.include.members([{id:1,group:1,exercise:1}]);
+      });
+    });
+  });
+
   it("can calculate the contingent for an exercise and tutor", function(){
     return test.load({Tutors:[{name:"a",contingent:20},{name:"b",contingent:10}],
       Solutions:[{exercise:1},{exercise:1,lock:"a",inProcess:false},{exercise:1},{exercise:2}]
@@ -215,6 +238,7 @@ describe("Correction methods", function(){
       });
     });
   });
+
   it("can get a specific solution for a user", function(){
     return test.load({Solutions: [{id:1,group:1,exercise:1},{id:2,group:1,exercise:2},{id:3,group:2,exercise:2}],
               Groups: [{id:1,users:[2], pendingUsers:[]}],
