@@ -6,11 +6,46 @@ moment = require 'moment'
 utils = require './utils'
 
 module.exports = (con) ->
-  # destructive removale of user. Make sure to insert him into another group afterwards
-  leaveGroup = (user_id) ->
+  desensetizeGroupQuery = (query) ->
+    query.merge((g) ->
+      users: idListToPseudonymList g("users")
+      pendingUsers: idListToPseudonymList g("pendingUsers"))
+
+  # update user previousGroup field
+  updatePreviousGroup = (user_id, get_group_query) ->
+    # group_id
+    rdb.branch(
+      rdb.table("Users").get(user_id).hasFields("previousGroup").not(),
+      rdb.table("Users").get(user_id).update(
+        {"previousGroup": rdb.table("Groups")
+                          .getAll(user_id, {index: "users"}).nth(0)("id").coerceTo('array')},
+        {nonAtomic: true}
+      ),
+      rdb.table("Users").get(user_id).update(
+        {"previousGroup": rdb.row("previousGroup").append(rdb.table("Groups")
+                          .getAll(user_id, {index: "users"}).nth(0)("id"))},
+        {nonAtomic: true}
+      )
+    )
+
+  # removes user from group. terminally
+  removeFromGroup = (user_id) ->
     rdb.table("Groups").getAll(user_id, {index: "users"}).replace (doc) ->
       doc.merge users: doc("users").setDifference([user_id])
 
+  # get the Group of one user
+  getGroupForUser = (user_id) ->
+    desensetizeGroupQuery rdb.table("Groups").getAll(user_id, {index: "users"}).nth(0)
+
+  # destructive removale of user. Make sure to insert him into another group afterwards
+  leaveGroup = (user_id) ->
+    rdb.do(
+      updatePreviousGroup(user_id, getGroupForUser),
+      removeFromGroup(user_id),
+      (updateStats, replaceStats) ->
+        updateStats: updateStats,
+        replaceStats: replaceStats
+    )
 
   pseudonymListToIdList = (plist) ->
     rdb.expr(plist).map((p) -> rdb.table("Users").getAll(p,index:"pseudonym").nth(0)("id"))
@@ -20,9 +55,8 @@ module.exports = (con) ->
 
   # remove sensitive infomation in group
   desensetizeGroup = (query) ->
-    query.merge((g) ->
-      users: idListToPseudonymList g("users")
-      pendingUsers: idListToPseudonymList g("pendingUsers")).run(con)
+    desensetizeGroupQuery(query).run(con)
+
   desensetizeGroups = (query) ->
     query.map((g) ->
       g.merge
@@ -44,10 +78,9 @@ module.exports = (con) ->
       return cnt != 0
 
   # get the Group of one user
-  getGroupForUser: (user_id) ->
-    desensetizeGroup rdb.table("Groups").getAll(user_id, {index: "users"}).nth(0)
+  getGroupForUser: (user_id) -> getGroupForUser(user_id).run(con)
 
-    # returns a list of groups with pending invitations
+  # returns a list of groups with pending invitations
   pending: (user_id) ->
     utils.toArray desensetizeGroups(rdb.table("Groups").getAll(user_id, {index: "pendingUsers"}))
 
@@ -66,3 +99,5 @@ module.exports = (con) ->
             users: doc("users").setUnion([user_id])),
         (res1,res2) -> res2),
       rdb.error "User cannot join a group without invitation")).run(con)
+
+  leaveGroup: (user_id) -> leaveGroup(user_id).run(con)
