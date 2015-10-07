@@ -1,5 +1,3 @@
-
-
 _ = require 'lodash'
 rdb = require 'rethinkdb'
 moment = require 'moment'

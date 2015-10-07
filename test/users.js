@@ -106,6 +106,18 @@ describe("User queries", function(){
     });
   });
 
+  it("clears pending pseudonyms if they are old enough", function() {
+    return test.load({PseudonymList:[{pseudonym:"abc",user:2,locked:rdb.ISO8601(moment().subtract(11,"minutes").toJSON())},
+                                     {pseudonym:"abc",user:1,locked:rdb.ISO8601(moment().subtract(16,"minutes").toJSON())}]})
+    .then(function() {
+      return test.db.Users.clearPendingPseudonyms().then(function() {
+        return test.db.Users.getInternalPseudonymList().then(function(list) {
+          list.should.have.length(1)
+        });
+      });
+    });
+  });
+
   it("cannot query a non existing user", function(){
     return test.db.Users.getTutor("nonExisting").should.be.rejected;
   });

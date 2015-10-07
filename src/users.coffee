@@ -6,8 +6,14 @@ rndString = require 'randomstring'
 moment = require 'moment'
 
 
-module.exports = (con) ->
+module.exports = (con, config) ->
   Groups = (require './groups')(con)
+
+  config.lockTime = config.lockTime or 15
+  clearPendingPseudonyms = ->
+    rdb.table('PseudonymList').hasFields("locked").filter(
+      rdb.now().sub(rdb.row("locked")).gt(config.lockTime*60)
+    ).delete()
 
   generatePseudonymList = (p) ->
     [p].concat _.map (_.range 42), -> p + " " + _.random 1000,9999
@@ -20,9 +26,11 @@ module.exports = (con) ->
       rdb.table('Users').get(id).run(con)
 
     getPseudonym: (id) ->
+      clearPendingPseudonyms()
       utils.getFirstKey "pseudonym", rdb.table('Users').get(id).pluck('pseudonym').run(con)
 
     setPseudonym: (id, newPseudonym) ->
+      clearPendingPseudonyms()
       rdb.branch(rdb.table('PseudonymList').getAll(newPseudonym).filter( (doc) ->
           doc("user").ne(id)
         ).count().eq(0),
@@ -43,6 +51,7 @@ module.exports = (con) ->
             return Promise.resolve()
 
     lockRandomPseudonymFromList: (id, plist) ->
+      clearPendingPseudonyms()
       utils.first(rdb.expr(plist)
         .filter((e) -> rdb.table("PseudonymList").getAll(e,index:"pseudonym").count().eq(0))
         .sample(1).run(con))
@@ -51,9 +60,11 @@ module.exports = (con) ->
             .then(-> return p)
 
     getInternalPseudonymList: ->
+      clearPendingPseudonyms()
       utils.toArray rdb.table('PseudonymList').run(con)
 
     getPseudonymList: ->
+      clearPendingPseudonyms()
       utils.toArray rdb.table('Users')('pseudonym').run(con)
 
     getTutor: (name) ->
@@ -70,3 +81,5 @@ module.exports = (con) ->
         if tutor
           return pw_compare tutor.pw
         return false
+
+    clearPendingPseudonyms: -> clearPendingPseudonyms().run(con)
