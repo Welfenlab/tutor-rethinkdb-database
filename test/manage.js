@@ -43,7 +43,7 @@ describe("Managing methods", function(){
     });
   });
   it("should create a new exercise for a new ID", function(){
-    return test.db.Manage.storeExercise({id:1}).then(function(){
+    return test.db.Manage.storeExercise({id:1, activationDate: moment().toJSON(), dueDate: moment().toJSON()}).then(function(){
       return test.db.Manage.listExercises().then(function(exercises){
         exercises.should.have.length(1);
         exercises[0].id.should.equal(1);
@@ -51,9 +51,9 @@ describe("Managing methods", function(){
     });
   });
   it("should update an existing exercise by ID", function(){
-    return test.load({Exercises:[{id:1,number:2}]})
+    return test.load({Exercises:[{id:1,number:2, activationDate: moment().toJSON(), dueDate: moment().toJSON()}]})
     .then(function(){
-      return test.db.Manage.storeExercise({id:1,number:1}).then(function(){
+      return test.db.Manage.storeExercise({id:1,number:1, activationDate: moment().toJSON(), dueDate: moment().toJSON()}).then(function(){
         return test.db.Manage.listExercises().then(function(exercises){
           exercises.should.have.length(1);
           exercises[0].id.should.equal(1);
