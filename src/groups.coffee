@@ -115,5 +115,7 @@ module.exports = (con, config) ->
   leaveGroup: (user_id) ->
     (require './users')(con, config).getPseudonym(user_id).then (pseudo) ->
       getGroupForUser(user_id).run(con).then (group) ->
-        removePendingUsers(group.id).run(con).then () ->
-          createGroup(user_id, [pseudo])
+        if group.users.length == 1
+          removePendingUsers(group.id).run(con).then () ->
+            return
+        createGroup(user_id, [pseudo])
