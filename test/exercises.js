@@ -82,9 +82,9 @@ describe("Student Exercise Queries", function(){
     {
       Exercises:[
         {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
-          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTest: {}, solution: {}},
           {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
-          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTest: {}}
         ]}
       ]
     }).then(function() {
@@ -92,8 +92,10 @@ describe("Student Exercise Queries", function(){
         (Array.isArray(ex)).should.be.false;
         ex.id.should.equal(1);
         //ex.tasks.should.all.not.have.key("solution");
-        for (var i = 0; i != ex.tasks.length; ++i)
+        for (var i = 0; i != ex.tasks.length; ++i) {
           ex.tasks[i].should.not.have.key("solution");
+          ex.tasks[i].should.not.have.key("solutionTest");
+        }
       });
     });
   });
@@ -117,9 +119,9 @@ describe("Student Exercise Queries", function(){
           {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
         ]},
         {id:2,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
-          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTest: {}, solution: {}},
           {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
-          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTest: {}}
         ]}
       ]
     }).then(function(){
@@ -130,8 +132,10 @@ describe("Student Exercise Queries", function(){
         // note for future readers:
         // chai-things solution did not work
         for (var j = 0; j != ex.length; ++j)
-          for (var i = 0; i != ex[j].tasks.length; ++i)
+          for (var i = 0; i != ex[j].tasks.length; ++i) {
             ex[j].tasks[i].should.not.have.key("solution");
+            ex[j].tasks[i].should.not.have.key("solutionTest");
+          }
       });
     });
   });

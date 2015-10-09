@@ -16,14 +16,20 @@ module.exports = (con) ->
         .coerceTo('array').run(con).then (e) ->
           new Promise (resolve, reject) ->
             _.forEach e, (n, k) ->
-              e[k].tasks = _.map n.tasks, (n) -> delete n.solution; n
+              e[k].tasks = _.map n.tasks, (n) ->
+                delete n.solution
+                delete n.solutionTest
+                n
             resolve e
 
     getById: (id)->
       rdb.table('Exercises').get(id).run(con).then (e) ->
         new Promise (resolve, reject) ->
           if (moment().isAfter e.activationDate)
-            e.tasks = _.map e.tasks, (n) -> delete n.solution; n
+            e.tasks = _.map e.tasks, (n) ->
+              delete n.solution
+              delete n.solutionTest
+              n
             resolve e
           else
             reject "Exercise with id #{id} not found"
