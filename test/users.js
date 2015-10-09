@@ -147,5 +147,31 @@ describe("User queries", function(){
       });
     });
   });
+
+  it("should get all points for a user", function(){
+    return test.load(
+      {Solutions:[
+        {exercise: 1, group: 1, results:{points: 1},lock: "tutor",inProcess:false},
+        {exercise: 1, group: 1, results:{points: 2},lock: "tutor",inProcess:false},
+        {exercise: 1, group: 2, results:{points: 4},lock: "tutor",inProcess:false},
+        {exercise: 2, group: 1, results:{points: 8},lock: "tutor",inProcess:false},
+        {exercise: 1, group: 2},
+        {exercise: 2, group: 1, lock:"blubb",inProcess:true},
+        {exercise: 2, group: 2}
+      ],
+      Groups:[
+        {id:1,users:[1,5],pendingUsers:[]},
+        {id:2,users:[2,3],pendingUsers:[]},
+        {id:3,users:[4],pendingUsers:[]}
+      ],
+      Users: [
+        {id:1}
+      ]})
+    .then(function() {
+      return test.db.Users.getTotalPoints(1).then(function(points) {
+        points.should.equal(11);
+      })
+    });
+  });
   /**/
 });
