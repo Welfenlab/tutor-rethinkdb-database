@@ -26,7 +26,8 @@ module.exports = (con, config) ->
         if !config.sharejs?.rethinkdb?.db?
           resolve()
         else
-          rdb.dbCreate(config.sharejs.rethinkdb.db).run(con)
+          rdb.dbCreate(config.sharejs.rethinkdb.db).run(con).then(resolve).catch(resolve)
+        return
       .then ->
         utils.init con, conf   # initialize tables and indices
     Load: (data) -> utils.load con, data   # load data from json
