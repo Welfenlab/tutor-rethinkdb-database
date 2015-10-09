@@ -129,11 +129,9 @@ describe("Student Exercise Queries", function(){
 
         // note for future readers:
         // chai-things solution did not work
-        for (var j = 0; j != ex.length; ++j) {
-          console.log(ex[j].tasks);
+        for (var j = 0; j != ex.length; ++j)
           for (var i = 0; i != ex[j].tasks.length; ++i)
             ex[j].tasks[i].should.not.have.key("solution");
-        }
       });
     });
   });
