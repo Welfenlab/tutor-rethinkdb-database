@@ -70,6 +70,36 @@ describe("Correction methods", function(){
       });
     });
   });
+  it("should not be possibe to lock more than 10 solutions by a single tutor", function() {
+    return test.load(
+      {Solutions: [
+        {exercise: 1, id:1, lock:"Hans", inProcess: false},
+        {exercise: 1, id:2, lock:"Hans", inProcess: true},
+        {exercise: 1, id:3, lock:"Hans", inProcess: true},
+        {exercise: 1, id:4, lock:"Hans", inProcess: false},
+        {exercise: 1, id:5, lock:"Hans", inProcess: true},
+        {exercise: 1, id:6, lock:"Hans", inProcess: true},
+        {exercise: 1, id:7, lock:"Hans", inProcess: true},
+        {exercise: 1, id:8, lock:"Hans", inProcess: true},
+        {exercise: 1, id:9, lock:"Hans", inProcess: true},
+        {exercise: 1, id:10, lock:"Hans", inProcess: true},
+        {exercise: 1, id:12, lock:"Hans", inProcess: true},
+        {exercise: 1, id:13, lock:"Hans", inProcess: true},
+        {exercise: 1, id:14, lock:"Hans", inProcess: true},
+        {exercise: 1, id:11}, {exercise: 1, id:12}],
+       Tutors: [{name: "Hans"}]})
+    .then(function() {
+      return test.db.Corrections.lockNextSolutionForTutor("Hans", 1).should.be.rejected;
+    });
+  });
+  it("should create a time stamp when locking a solution", function () {
+    return test.load({Solutions: [{exercise: 1, group: 2}]})
+    .then(function() {
+      return test.db.Corrections.lockNextSolutionForTutor("tutor", 1).then(function(sol) {
+        sol.should.have.property("lockTimeStamp");
+      });
+    });
+  });
   //---------------------------------------------------------------------
   // Locks
   //---------------------------------------------------------------------

@@ -6,6 +6,8 @@ rdb = require 'rethinkdb'
 
 
 module.exports = (con, config) ->
+  config.maxSolutionLocks = config.maxSolutionLocks or 10
+
   isFree = (doc,tutor) ->
     if tutor
       doc.hasFields("results").not().and(
@@ -23,7 +25,7 @@ module.exports = (con, config) ->
   lockSolutionForTutor = (tutor, id) ->
     rdb.do(rdb.table("Solutions").get(id), (doc) ->
       rdb.branch(isFree(doc,tutor),
-        rdb.table("Solutions").get(id).update(lock:tutor,inProcess:true),
+        rdb.table("Solutions").get(id).update(lock:tutor,inProcess:true,lockTimeStamp:rdb.now()),
         rdb.error "Solution (ID #{id}) is already locked"
     )).run(con)
 
@@ -143,12 +145,28 @@ module.exports = (con, config) ->
       (rdb.table("Solutions")
         .getAll(exercise_id, index: "exercise")
         .filter( (doc) -> isFree(doc)).sample(1).run(con)).then (sol) ->
-          if !sol or sol.length != 1
-            return Promise.reject "Already locked by another tutor"
-          rdb.table("Solutions").get(sol[0].id).update({lock:tutor,inProcess:true}).run(con).then ->
-            sol[0].inProcess = true
-            sol[0].lock = tutor
-            return sol[0]
+          # number of locks by tutor
+          rdb.table("Solutions")
+            .getAll(exercise_id, index: "exercise")
+            .filter(rdb.row("lock").eq(tutor).and(rdb.row("inProcess").eq(true)))
+            .count()
+            .run(con)
+            .then (lockCount) ->
+              # too much locked & in progress exercises?
+              if lockCount > config.maxSolutionLocks
+                return Promise.reject "Too much locked solutions by tutor #{tutor}"
+
+              # no solutions ?
+              if !sol or sol.length != 1
+                return Promise.reject "Already locked by another tutor"
+
+              # assign solution
+              rdb.table("Solutions").get(sol[0].id).update({lock:tutor,inProcess:true,lockTimeStamp:rdb.now()}).run(con).then ->
+                sol[0].inProcess = true
+                sol[0].lock = tutor
+                sol[0].lockTimeStamp = rdb.now()
+                sol[0].lockCount = lockCount
+                return sol[0]
 
     getNumPending: (exercise_id) ->
       rdb.table("Solutions").filter( (doc) ->
