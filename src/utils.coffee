@@ -77,12 +77,23 @@ module.exports =
     config =
       db: config.db
       tables: tables
-    new Promise (resolve, reject) ->
+    (new Promise (resolve, reject) ->
       rdbSetup.setup con, config, (err) ->
         if err
           reject (err)
         else
           resolve()
+    ).then( new Promise (resolve, reject) ->
+      if !config.sharejs?.rethinkdb?.db
+        resolve()
+      config =
+        db: config.sharejs.rethinkdb.db
+      rdbSetup.setup con, config, (err) ->
+        if err
+          reject (err)
+        else
+          resolve()
+    )
 
   empty: (con, config) ->
     config =
