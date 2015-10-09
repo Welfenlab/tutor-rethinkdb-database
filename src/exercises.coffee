@@ -12,13 +12,18 @@ module.exports = (con) ->
 
   API =
     get: ->
-      utils.toArray(rdb.table('Exercises').filter( (ex) ->
-        ex('activationDate').lt new Date() ).without("solutions").run(con))
+      rdb.table('Exercises').filter( (ex) -> ex('activationDate').lt new Date() )
+        .coerceTo('array').run(con).then (e) ->
+          new Promise (resolve, reject) ->
+            _.forEach e, (n, k) ->
+              e[k].tasks = _.map n.tasks, (n) -> delete n.solution; n
+            resolve e
 
     getById: (id)->
-      rdb.table('Exercises').get(id).without("solutions").run(con).then (e) ->
+      rdb.table('Exercises').get(id).run(con).then (e) ->
         new Promise (resolve, reject) ->
           if (moment().isAfter e.activationDate)
+            e.tasks = _.map e.tasks, (n) -> delete n.solution; n
             resolve e
           else
             reject "Exercise with id #{id} not found"

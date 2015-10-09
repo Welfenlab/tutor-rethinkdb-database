@@ -1,8 +1,10 @@
 
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
+var chaiThings = require("chai-things");
 
 chai.use(chaiAsPromised);
+chai.use(chaiThings);
 chai.should();
 
 var rdb = require("rethinkdb");
@@ -79,13 +81,19 @@ describe("Student Exercise Queries", function(){
     return test.load(
     {
       Exercises:[
-        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[],solutions:[]}
+        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+          {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
+        ]}
       ]
-    }).then(function(){
+    }).then(function() {
       return test.db.Exercises.getById(1).then(function(ex){
         (Array.isArray(ex)).should.be.false;
         ex.id.should.equal(1);
-        ex.should.not.have.key("solutions");
+        //ex.tasks.should.all.not.have.key("solution");
+        for (var i = 0; i != ex.tasks.length; ++i)
+          ex.tasks[i].should.not.have.key("solution");
       });
     });
   });
@@ -103,13 +111,29 @@ describe("Student Exercise Queries", function(){
     return test.load(
     {
       Exercises:[
-        {id:"abc",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[],solutions:[]}
+        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+          {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
+        ]},
+        {id:2,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+          {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
+        ]}
       ]
     }).then(function(){
       return test.db.Exercises.get().then(function(ex){
         (Array.isArray(ex)).should.be.true;
-        ex.should.have.length(1)
-        ex[0].should.not.have.key("solutions");
+        ex.should.have.length(2);
+
+        // note for future readers:
+        // chai-things solution did not work
+        for (var j = 0; j != ex.length; ++j) {
+          console.log(ex[j].tasks);
+          for (var i = 0; i != ex[j].tasks.length; ++i)
+            ex[j].tasks[i].should.not.have.key("solution");
+        }
       });
     });
   });
