@@ -3,7 +3,7 @@ rdb = require 'rethinkdb'
 moment = require 'moment'
 utils = require './utils'
 
-module.exports = (con) ->
+module.exports = (con, config) ->
   desensetizeGroupQuery = (query) ->
     query.merge((g) ->
       users: idListToPseudonymList g("users")
@@ -61,8 +61,7 @@ module.exports = (con) ->
         users: idListToPseudonymList g("users")
         pendingUsers: idListToPseudonymList g("pendingUsers")).run(con)
 
-  # return
-  create: (user_id, group_users) ->
+  createGroup = (user_id, group_users) ->
     rdb.do(
       pseudonymListToIdList(group_users),
       leaveGroup(user_id),
@@ -71,8 +70,14 @@ module.exports = (con) ->
     ).run(con).then (res) ->
       desensetizeGroup rdb.table("Groups").getAll(user_id, index:"users").nth(0)
 
+  removePendingUsers = (group_id) ->
+    rdb.table("Groups").get(group_id).update({pendingUsers: []})
+
+  # return
+  create: (user_id, group_users) -> createGroup(user_id, group_users)
+
   hasGroup: (user_id) ->
-    rdb.table("Groups").getAll(user_id, {index: "users"}).count(0).run(con).then (cnt) ->
+    rdb.table("Groups").getAll(user_id, {index: "users"}).count().run(con).then (cnt) ->
       return cnt != 0
 
   # get the Group of one user
@@ -98,4 +103,17 @@ module.exports = (con) ->
         (res1,res2) -> res2),
       rdb.error "User cannot join a group without invitation")).run(con)
 
-  leaveGroup: (user_id) -> leaveGroup(user_id).run(con)
+  getGroups: () ->
+    rdb.table("Groups").coerceTo('array').run(con)
+
+  getGroup: (group_id) ->
+    rdb.table("Groups").get(group_id).run(con)
+
+  # Never use!
+  leaveGroupOnly: (user_id) -> leaveGroup(user_id).run(con)
+
+  leaveGroup: (user_id) ->
+    (require './users')(con, config).getPseudonym(user_id).then (pseudo) ->
+      getGroupForUser(user_id).run(con).then (group) ->
+        removePendingUsers(group.id).run(con).then () ->
+          createGroup(user_id, [pseudo])
