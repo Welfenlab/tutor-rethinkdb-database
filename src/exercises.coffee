@@ -56,14 +56,15 @@ module.exports = (con) ->
             delete sol.inProcess
             return sol
 
-    setExerciseSolution: (user_id, exercise_id, solution) ->
+    createExerciseSolution: (user_id, exercise_id) ->
       (API.isActive exercise_id).then (active) ->
         if !active
           Promise.reject "Cannot change solution for an exercise that is not active (user #{user_id}, execise: #{exercise_id})"
         else
-          (API.getExerciseSolution user_id, exercise_id).then (sol) ->
-            if sol
-              (rdb.table("Solutions").get(sol.id).update solution: solution).run(con)
-            else
-              (Group.getGroupForUser(user_id)).then (group) ->
-                (rdb.table("Solutions").insert group: group.id, exercise: exercise_id, solution: solution).run(con)
+          (Group.getGroupForUser(user_id)).then (group) ->
+            (rdb.table("Solutions").insert 
+              group: group.id
+              exercise: exercise_id
+              tasks: []
+              lastStore: rdb.epochTime(0)
+              ).run(con)

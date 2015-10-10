@@ -254,39 +254,18 @@ describe("Student Exercise Queries", function(){
         dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
     ]})
     .then(function(){
-      return test.db.Exercises.setExerciseSolution(1,1,["abc","cde"]).then(function(){
+      return test.db.Exercises.createExerciseSolution(1,1).then(function(){
         return test.db.Exercises.getExerciseSolution(1,1).then(function(sol){
-          (Array.isArray(sol)).should.be.false;
-          sol.solution.should.deep.include.members(["abc","cde"])
-        });
-      });
-    });
-  });
-  it("should update a solution if there is one", function(){
-    return test.load({Solutions:[
-      {group:"A",exercise: 1,solution:["text","textA"]}
-    ], Groups: [
-      {id: "A", users: [ 1 ], pendingUsers:[]}
-    ], Users: [
-      {id: 1, pseudonym: 1}
-    ], Exercises: [
-      {id: 1,
-        activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
-        dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
-    ]})
-    .then(function(){
-      return test.db.Exercises.setExerciseSolution(1,1,["abc","cde"]).then(function(){
-        return test.db.Exercises.getExerciseSolution(1,1).then(function(sol){
-          (Array.isArray(sol)).should.be.false;
-          sol.solution.should.deep.include.members(["abc","cde"])
+          (sol == null).should.be.false;
+          sol.group.should.equal("A");
+          sol.exercise.should.equal(1);
         });
       });
     });
   });
 
-  it("should not update a solution if the exercise has expired", function(){
+  it("should not create a solution if the exercise has expired", function(){
     return test.load({Solutions:[
-      {group:"A",exercise: 1,solution:["text","textA"]}
     ], Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
@@ -297,13 +276,12 @@ describe("Student Exercise Queries", function(){
         dueDate: rdb.ISO8601(moment().subtract(1, "days").toJSON())}
     ]})
     .then(function(){
-      return test.db.Exercises.setExerciseSolution(1,1,["abc","cde"]).should.be.rejected;
+      return test.db.Exercises.createExerciseSolution(1,1).should.be.rejected;
     });
   });
 
-  it("should not update a solution for a not-yet active exercise", function(){
+  it("should not create a solution for a not-yet active exercise", function(){
     return test.load({Solutions:[
-      {group:"A",exercise: 1,solution:["text","textA"]}
     ], Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
@@ -314,7 +292,7 @@ describe("Student Exercise Queries", function(){
         dueDate: rdb.ISO8601(moment().add(7, "days").toJSON())}
     ]})
     .then(function(){
-      return test.db.Exercises.setExerciseSolution(1,1,["abc","cde"]).should.be.rejected;
+      return test.db.Exercises.createExerciseSolution(1,1).should.be.rejected;
     });
   });
 });

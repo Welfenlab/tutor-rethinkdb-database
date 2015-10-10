@@ -32,3 +32,20 @@ module.exports = (con) ->
 
   listGroups: ->
     utils.toArray rdb.table("Groups").run(con)
+  
+  updateOldestSolution: () ->
+    rdb.do(
+      rdb.table("Solutions").orderBy({index: "lastStore"}).nth(0),
+      rdb.table("Solutions").orderBy({index: "lastStore"}).nth(0).update(lastStore: rdb.now()),
+      (oldest, update) ->
+        # do something with it...
+        return 1;
+        ).run(con)
+    ###
+    rdb.do(
+      rdb.table("Users").get(user),
+      rdb.table("Solutions").get(solution),
+      (user, solution) ->
+        
+        )
+    ###
