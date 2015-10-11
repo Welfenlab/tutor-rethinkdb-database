@@ -62,9 +62,13 @@ module.exports = (con) ->
           Promise.reject "Cannot change solution for an exercise that is not active (user #{user_id}, execise: #{exercise_id})"
         else
           (Group.getGroupForUser(user_id)).then (group) ->
-            (rdb.table("Solutions").insert 
-              group: group.id
-              exercise: exercise_id
-              tasks: []
-              lastStore: rdb.epochTime(0)
+            rdb.branch(
+              rdb.table("Solutions").getAll(group.id,{index:"group"})
+                .filter({"exercise":exercise_id}).count().eq(0),
+              rdb.table("Solutions").insert
+                group: group.id
+                exercise: exercise_id
+                tasks: []
+                lastStore: rdb.epochTime(0)
+              rdb.expr("Solution already exists")
               ).run(con)

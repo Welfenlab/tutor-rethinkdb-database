@@ -5,7 +5,7 @@ moment = require 'moment'
 utils = require './utils'
 
 
-module.exports = (con) ->
+module.exports = (con,config) ->
 
   storeTutor: (name, pw_hash) ->
     (rdb.table("Tutors").insert {name: name, pw:pw_hash}, conflict: "update").run con
@@ -32,20 +32,29 @@ module.exports = (con) ->
 
   listGroups: ->
     utils.toArray rdb.table("Groups").run(con)
-  
-  updateOldestSolution: () ->
+
+  updateOldestSolution: (minAge) ->
+    minAge = minAge or 300
+    if !config.sharejs?.rethinkdb?.db?
+      return Promise.reject "No sharejs database defined"
     rdb.do(
-      rdb.table("Solutions").orderBy({index: "lastStore"}).nth(0),
-      rdb.table("Solutions").orderBy({index: "lastStore"}).nth(0).update(lastStore: rdb.now()),
+      rdb.table("Solutions")
+        .orderBy({index: "lastStore"})
+        .filter(rdb.row("lastStore").add(minAge).lt(rdb.now()))
+        .eqJoin('exercise', rdb.table("Exercises")).nth(0),
+      rdb.table("Solutions")
+        .orderBy({index: "lastStore"})
+        .filter(rdb.row("lastStore").add(minAge).lt(rdb.now()))
+        .nth(0).update(lastStore: rdb.now()),
       (oldest, update) ->
-        # do something with it...
-        return 1;
+        rdb.table("Solutions").get(oldest("left")("id")).update({
+          tasks: oldest("right")("tasks").map( (t) ->
+            rdb.db(config.sharejs.rethinkdb.db)
+              .table(rdb.add(rdb.args(oldest("left")("group").split("-"))))
+              .get(
+                rdb.add(rdb.args(rdb.add(oldest("right")("id"),t("number")).split("-")))
+              ).pluck("_data")
+          ).map (s) ->
+            s.merge({"solution": s("_data")}).without("_data")
+          } , {nonAtomic: true})
         ).run(con)
-    ###
-    rdb.do(
-      rdb.table("Users").get(user),
-      rdb.table("Solutions").get(solution),
-      (user, solution) ->
-        
-        )
-    ###
