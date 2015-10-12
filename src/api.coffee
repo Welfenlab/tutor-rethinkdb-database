@@ -11,6 +11,7 @@ module.exports = (con, config) ->
   config = config or standardConfig
   conf = host:config.database.host, port:config.database.port, db: config.database.name
 
+  Connection: con
   Corrections: (require './corrections')(con,config)
   Exercises: (require './exercises')(con,config)
   Users: (require './users')(con,config)
