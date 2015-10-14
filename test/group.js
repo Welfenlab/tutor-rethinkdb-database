@@ -61,6 +61,16 @@ describe("Group queries", function(){
       });
     });
   });
+  it("should be possible to create a group of only one user", function(){
+    return test.load({Users:[
+      {id:1,pseudonym:"A"}
+    ]})
+    .then(function(){
+      return test.db.Groups.create(1,["A"]).then(function(group){
+        group.users.should.deep.equal(["A"]);
+      });
+    });
+  });
   it("creating a group of users should add others as pending", function(){
     return test.load({Users:[
       {id:1,pseudonym:"A"},
