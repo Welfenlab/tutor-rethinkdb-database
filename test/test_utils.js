@@ -39,6 +39,9 @@ var newDb = function(cb){
     return rdb.connect(config).then(function(conn){
       con = conn;
       conData.con = con;
+    }, function(err){
+      console.log(err.msg, "\nexiting, check if RethinkDB is correctly running");
+      process.exit(1);
     }).then(p(createDb)).then(p(initDb)).then(p(startTest));
   } else {
     return startTest();
