@@ -165,7 +165,9 @@ describe("Correction methods", function(){
   it("should fail if no exercise could be locked", function(){
     return test.load({Solutions: [{exercise:1, group:1, result:[]},{exercise:2,group:2}]})
     .then(function(){
-      return test.db.Corrections.lockNextSolutionForTutor("tutor",3).should.be.rejected;
+      return test.db.Corrections.lockNextSolutionForTutor("tutor",3).then(function(res){
+        (res === undefined).should.be.true;
+      });
     });
   });
   it("should finalize a solution by setting the 'inProcess' marker to false", function(){
