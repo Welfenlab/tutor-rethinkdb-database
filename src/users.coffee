@@ -37,7 +37,6 @@ module.exports = (con, config) ->
         rdb.table('Users').get(id).update(pseudonym: newPseudonym),
         rdb.error("Pseudonym #{newPseudonym} already taken")).run(con)
 
-    ###
     getTotalPoints: (user_id) ->
       group = {}
       rdb.table("Groups").getAll(user_id, {index: "users"}).nth(0).run(con)
@@ -47,6 +46,7 @@ module.exports = (con, config) ->
         .then (user) ->
           groups = user.previousGroups or []
           groups.push(group.id)
+          console.log(groups)
           # rdb.table("Solutions").getAll(group.id, {index: "group"}).
           rdb.table("Solutions")
             .getAll(rdb.args(groups), {index: "group"})
@@ -56,7 +56,6 @@ module.exports = (con, config) ->
             .sum()
             .default(0)
             .run(con)
-    ###
 
     create: (user) ->
       if not user.id or not user.name or not user.pseudonym or not user.matrikel

@@ -148,16 +148,16 @@ describe("User queries", function(){
     });
   });
 
-  /*
   it("should get all points for a user", function(){
     return test.load(
       {Solutions:[
         {exercise: 1, group: 1, results:{points: 1},lock: "tutor",inProcess:false},
         {exercise: 1, group: 1, results:{points: 2},lock: "tutor",inProcess:false},
-        {exercise: 1, group: 2, results:{points: 4},lock: "tutor",inProcess:false},
         {exercise: 2, group: 1, results:{points: 8},lock: "tutor",inProcess:false},
-        {exercise: 1, group: 2},
         {exercise: 2, group: 1, lock:"blubb",inProcess:true},
+        {exercise: 2, group: 1, results:{points: 16},lock:"blubb",inProcess:true},
+        {exercise: 1, group: 2, results:{points: 4},lock: "tutor",inProcess:false},
+        {exercise: 1, group: 2},
         {exercise: 2, group: 2}
       ],
       Groups:[
@@ -169,11 +169,19 @@ describe("User queries", function(){
         {id:1, previousGroups: [2]}
       ]})
     .then(function() {
-      return test.db.Users.getTotalPoints(1).then(function(points) {
-        points.should.equal(15);
-      })
+      return Promise.all([
+        test.db.Users.getTotalPoints(1),
+        test.db.Users.getTotalPoints(2),
+        test.db.Users.getTotalPoints(3),
+        test.db.Users.getTotalPoints(4),
+        test.db.Users.getTotalPoints(5)
+      ], function(p1, p2, p3, p4, p5, p6) {
+        p1.should.equal(11);
+        p2.should.equal(4);
+        p3.should.equal(4);
+        p4.should.equal(0);
+        p5.should.equal(11);
+      });
     });
   });
-  */
-  /**/
 });
