@@ -8,6 +8,8 @@ utils = require './utils'
 module.exports = (con,config) ->
 
   storeTutor: (tutor) ->
+    if !tutor.name? or !tutor.password? or !tutor.contingent?
+      return Promise.reject("You must provide a name, password and contingent field")
     (rdb.table("Tutors").insert tutor, conflict: "update").run con
 
   get: ->

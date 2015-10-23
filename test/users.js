@@ -127,7 +127,7 @@ describe("User queries", function(){
         resolve(pw == "test123");
       })
     };
-    return test.load({Tutors: [{name: "a", pw:"test123"}]})
+    return test.load({Tutors: [{name: "a", password:"test123"}]})
     .then(function(){
       return test.db.Users.authTutor("a", cmpPromise).then(function(isAuthorized){
         isAuthorized.should.be.true;
