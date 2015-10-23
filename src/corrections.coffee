@@ -115,6 +115,9 @@ module.exports = (con, config) ->
 
     getSolutionsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).without("results").run(con)
+    
+    getSolutionById: (solution_id) ->
+      rdb.table("Solutions").get(solution_id).run(con)
 
     getSolutionsForGroup: (group_id) ->
       utils.toArray rdb.table("Solutions").getAll(group_id, {index: "group"}).run(con)

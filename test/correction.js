@@ -203,6 +203,16 @@ describe("Correction methods", function(){
       });
     });
   });
+  it("can get a solution by id", function(){
+    return test.load({Solutions: [{id:1}]})
+    .then(function(){
+      return test.db.Corrections.getSolutionById(1).then(function(s){
+        console.log(s);
+        s.id.should.equal(1);
+      });
+    });
+  });
+  
   it("has a method returning the correction status of all exercises", function(){
     var date = moment().subtract(1, "days").toJSON();
     return test.load({Solutions:[
