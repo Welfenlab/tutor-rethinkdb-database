@@ -100,7 +100,7 @@ module.exports = (con, config) ->
     authTutor: (name, pw_compare) ->
       (rdb.table('Tutors').get(name).run(con)).then (tutor) ->
         if tutor
-          return pw_compare tutor.pw
+          return pw_compare tutor.password
         return false
 
     clearPendingPseudonyms: -> clearPendingPseudonyms().run(con)

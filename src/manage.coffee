@@ -7,8 +7,10 @@ utils = require './utils'
 
 module.exports = (con,config) ->
 
-  storeTutor: (name, pw_hash) ->
-    (rdb.table("Tutors").insert {name: name, pw:pw_hash}, conflict: "update").run con
+  storeTutor: (tutor) ->
+    if !tutor.name? or !tutor.password? or !tutor.contingent?
+      return Promise.reject("You must provide a name, password and contingent field")
+    (rdb.table("Tutors").insert tutor, conflict: "update").run con
 
   get: ->
     utils.toArray(rdb.table('Exercises').run(con))
