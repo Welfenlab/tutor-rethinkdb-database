@@ -12,7 +12,19 @@ var newDb = function(cb){
   var dbName = conData.dbName || "TutorTest_"+cuid();
   conData.dbName = dbName;
   // should probably be configurable..
-  var config = {host:"localhost", port:"28015",db:dbName};
+  var config = {
+      database: {
+        host: "localhost",
+        port: "28015",
+        name: dbName,
+      },
+      sharejs: {
+        tableName: "ShareJsTable",
+        rethinkdb: {
+          db: dbName
+        }
+      }
+  };
 
   // to chain promises easierly
   var p = function(fn){ return function(){return fn();}};
@@ -24,10 +36,10 @@ var newDb = function(cb){
   };
   var initDb = function(){
     con.use(dbName);
-    return utils.init(con,config);
+    return utils.init(con, config);
   };
   var startTest = function(){
-    api = rdbAPI(con)
+    api = rdbAPI(con, config)
 
     api.con = con;
     api.dbName = dbName;

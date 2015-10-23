@@ -72,4 +72,34 @@ describe("Managing methods", function(){
       });
     });
   });
+  it("should update the oldest solution", function() {
+    return test.load({
+      Exercises: [
+        {id:1,number:1, activationDate: rdb.ISO8601(moment().toJSON()), dueDate: rdb.ISO8601(moment().toJSON()),
+        tasks: [{id: 0, number: 1, maxPoints: 10, solution: "Loesung", text: "Text"}]}
+      ],
+      Solutions: [
+        {
+          exercise: 1,
+          group: 16,
+          id: 256,
+          lastStore: rdb.now().sub(350),
+          tasks: []
+        },
+      ],
+      Groups: [
+        {id:16, pendingUsers: [], users: [4096]}
+      ],
+      Users: [
+        {id:4096, pseudonym: "Slick Dijkstra"}
+      ],
+      ShareJsTable: [{id:"16:1:1", _data:""}]
+    })
+    .then(function() {
+      return test.db.Manage.updateOldestSolution(300).then(function(results) {
+        results.replaced.should.equal(1);
+        results.errors.should.equal(0);
+      });
+    });
+  });
 });

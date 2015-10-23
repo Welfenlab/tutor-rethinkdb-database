@@ -17,8 +17,8 @@ module.exports = (con,config) ->
     rdb.table('Exercises').get(id).run(con)
 
   storeExercise: (exercise) ->
-    exercise.activationDate = rdb.ISO8601(exercise.activationDate)
-    exercise.dueDate = rdb.ISO8601(exercise.dueDate)
+    exercise.activationDate = exercise.activationDate
+    exercise.dueDate = exercise.dueDate
     (rdb.table("Exercises").insert exercise, conflict: "update").run con
 
   listExercises: ->
@@ -48,11 +48,14 @@ module.exports = (con,config) ->
         .nth(0).update(lastStore: rdb.now()),
       (oldest, update) ->
         rdb.table("Solutions").get(oldest("left")("id")).update({
-          tasks: oldest("right")("tasks").map( (t) ->
+          tasks: oldest("right")("tasks").map( (task) ->
+            # left = Solutions
+            # right = Exercises
+            # id = group : exercises : task("number")
             rdb.db(config.sharejs.rethinkdb.db)
-              .table(rdb.add(rdb.args(oldest("left")("group").split("-"))))
+              .table(config.sharejs.tableName)
               .get(
-                rdb.add(rdb.args(rdb.add(oldest("right")("id"),t("number")).split("-")))
+                rdb.add(oldest("left")("group").coerceTo("string"),":",oldest("right")("id").coerceTo("string"),":",task("number").coerceTo("string"))
               ).pluck("_data")
           ).map (s) ->
             s.merge({"solution": s("_data")}).without("_data")

@@ -11,6 +11,7 @@ tables =
   Tutors: "name"
   PseudonymList: ["pseudonym", "user"]
   session: "id"
+  ShareJsTable: "id"
 
 module.exports =
   toArray: (promise) ->
