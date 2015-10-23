@@ -24,7 +24,7 @@ describe("Managing methods", function(){
   afterEach(testUtils.afterTest(test));
 
   it("should create a new tutor", function(){
-    return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:"SALT"}).then(function(){
+    return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:1}).then(function(){
       return test.db.Manage.listTutors().then(function(tutors){
         tutors.should.have.length(1);
         tutors[0].name.should.equal("t");
@@ -32,12 +32,16 @@ describe("Managing methods", function(){
     });
   });
   it("should fail if a tutor object is invalid", function(){
-    return test.db.Manage.storeTutor({name:"t",pw:"ABC",contingent:"SALT"}).should.be.rejected;
+    return test.db.Manage.storeTutor({name:"t",pw:"ABC",contingent:1}).should.be.rejected;
+  });
+  
+  it("should fail if a tutor object is invalid", function(){
+    return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:"1"}).should.be.rejected;
   });
   it("should update an existing tutor", function(){
     return test.load({Tutors:[{name:"t",pw:"BCD"}]})
     .then(function(){
-      return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:"SALT"}).then(function(){
+      return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:2}).then(function(){
         return test.db.Manage.listTutors().then(function(tutors){
           tutors.should.have.length(1);
           tutors[0].name.should.equal("t");
