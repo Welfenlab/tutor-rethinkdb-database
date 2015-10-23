@@ -158,7 +158,7 @@ module.exports = (con, config) ->
 
               # no solutions ?
               if !sol or sol.length != 1
-                return Promise.reject "Already locked by another tutor"
+                return Promise.resolve()
 
               # assign solution
               rdb.table("Solutions").get(sol[0].id).update({lock:tutor,inProcess:true,lockTimeStamp:rdb.now()}).run(con).then ->
