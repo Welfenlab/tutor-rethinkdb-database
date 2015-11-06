@@ -254,7 +254,6 @@ describe("Student Exercise Queries", function(){
         dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
     ]})
     .then(function(){
-      // FIXME
       return test.db.Exercises.createExerciseSolution(1,1).then(function(){
         return test.db.Exercises.getExerciseSolution(1,1).then(function(sol){
           (sol == null).should.be.false;
@@ -301,11 +300,10 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  /*
   it("should not create anything if user and group have solution", function() {
     return test.load({
       Solutions: [{id: 1, group: 1, exercise: 1}],
-      Groups: [{id: "A", users: [ 1 ], pendingUsers:[]}],
+      Groups: [{id: 1, users: [1], pendingUsers:[]}],
       Users: [{id: 1, solutions: [1], pseudonym: "A"}],
       Exercises: [
         {id: 1, activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
@@ -313,12 +311,49 @@ describe("Student Exercise Queries", function(){
       ]
     })
     .then(function() {
-      return test.db.Exercises.createExerciseSolution(1, 1).should.be.resolved;
+      return test.db.Exercises.createExerciseSolution(1, 1).should.be.fulfilled;
     });
   });
-  */
 
-  it("should create a solution if a user has none, but the group has, and update his solution field", function() {
+  it("should update the users solution array if the group has one", function() {
+    return test.load({Solutions:[
+      {id: 1, group:1, exercise: 1,solution:["text","textA"]},
+      {id: 2, group:3, exercise: 1,solution:["text2","textA2"]},
+      {id: 3, group:2, exercise: 2,solution:["text3","textA3"]},
+      {id: 4, group:1, exercise: 2,solution:["text3","textA3"]}
+    ], Groups: [
+      {id: 1, users: [ 1 ],pendingUsers:[]},
+      {id: 2, users: [ 2 ],pendingUsers:[]},
+      {id: 3, users: [ 3 ],pendingUsers:[]}
+    ], Users: [
+      {id: 1, pseudonym: "a", solutions: [2]},
+      {id: 2, pseudonym: "b", solutions: []},
+      {id: 3, pseudonym: "c", solutions: []}
+    ], Exercises: [
+      {id: 1,
+        activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
+        dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
+    ]})
+    .then(function() {
+      return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
+        return test.db.Users.get(1).then(function(usr) {
+          // should have overriden user solution
+          console.log(usr);
+          (Array.isArray(usr.solutions)).should.be.true;
+          usr.solutions.should.not.be.empty();
+          usr.solutions[0].should.equal(1);
+          return test.db.Group.getGroupForUserUnfiltered(1).then(function(group) {
+            return test.db.getExerciseSolution(1, 1).then(function(solution) {
+              // should be unchanged
+              solution.id.should.equal(1);
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it("should update a solution field of a user, if the group has one", function() {
     return test.load({Solutions:[
       {id: 1, group:1, exercise: 1,solution:["text","textA"]},
       {id: 2, group:3, exercise: 1,solution:["text2","textA2"]},
@@ -345,4 +380,5 @@ describe("Student Exercise Queries", function(){
       });
     });
   });
+
 });
