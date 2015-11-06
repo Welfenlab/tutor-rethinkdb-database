@@ -46,7 +46,6 @@ module.exports = (con, config) ->
         .then (user) ->
           groups = user.previousGroups or []
           groups.push(group.id)
-          console.log(groups)
           # rdb.table("Solutions").getAll(group.id, {index: "group"}).
           rdb.table("Solutions")
             .getAll(rdb.args(groups), {index: "group"})

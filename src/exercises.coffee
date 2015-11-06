@@ -11,16 +11,17 @@ module.exports = (con, config) ->
   Group = (require './groups')(con, config)
   Corrections = (require './corrections')(con, config)
 
-  GetGroupSolutionForExercise = (group_id, exercise_id) ->
+  getGroupSolutionForExercise = (group_id, exercise_id) ->
     rdb.table("Solutions").getAll(group_id, {index: "group"}).filter({"exercise": exercise_id}).nth(0).default(null)
 
   # Find solution id in user.solution for exercise_id, if existant
-  FindSolutionForExerciseInUserArray = (user_id, exercise_id) ->
-    rdb.table("Solutions").getAll(rdb.args(rdb.table("Users").get(user_id).getField("solutions"))).filter(
-      {"exercise": exercise_id}
-    ).nth(0).default(null)
+  findSolutionForExerciseInUserArray = (user_id, exercise_id) ->
+    rdb.table("Users").getAll(user_id).map( (val) ->
+      val("solutions").map (sid) ->
+        rdb.table("Solutions").get(sid)
+    ).nth(0).filter({"exercise": exercise_id}).nth(0).default(null)
 
-  CopyOverOrDeleteOldSolution = (group_id, user_id, solution_id, exercise_id) ->
+  copyOverOrDeleteOldSolution = (group_id, user_id, solution_id, exercise_id) ->
     rdb.branch(
       rdb.table("Solutions").getAll(group_id, {index: "group"}).count().ne(0),
       # The group has a solution already
@@ -36,17 +37,14 @@ module.exports = (con, config) ->
         lastStore: rdb.epochTime(0) # There hasn't been any stores
     )
 
-  CreateGroupSolutionAndUpdateUser = (group_id, exercise_id, groupSolution, user_id) ->
+  createGroupSolutionAndUpdateUser = (group_id, exercise_id, groupSolution, user_id) ->
     if groupSolution?
-      console.log("groupSolution!")
       # The group has a solution already
       # Assign solution id of group to user
       rdb.table("Users").get(user_id).update(
-        solutions: rdb.row("solutions").merge(groupSolution.id)
+        solutions: rdb.row("solutions").append(groupSolution.id)
       ).run(con)
     else
-      console.log("groupSolution not!")
-
       # There is no group solution and no user Solution
       rdb.table("Solutions").insert({
         group: group_id
@@ -55,7 +53,7 @@ module.exports = (con, config) ->
         lastStore: rdb.epochTime(0) # There hasn't been any stores
       }, {return_changes: true}).run(con).then (changes) ->
         rdb.table("Users").get(user_id).update(
-          solutions: rdb.row("solutions").merge(changes.generated_keys[0])
+          solutions: rdb.row("solutions").append(changes.generated_keys[0])
         ).run(con)
 
   API =
@@ -111,41 +109,37 @@ module.exports = (con, config) ->
     # but not corresponding to the users group, it will be removed from this Users
     # solution list, except there is no solution for this group, it will then be copied over.
     createExerciseSolution: (user_id, exercise_id) ->
-      rdb.table("Groups").coerceTo('array').run(con).then (grps) ->
-        console.log user_id
-        console.log grps
+      # isActive tests both things: whether the exercise is active and not expired
       (API.isActive exercise_id).then (active) ->
         if !active
           Promise.reject "Cannot change solution for an exercise that is not active (user #{user_id}, exercise: #{exercise_id})"
         else
-          rdb.table("Groups").coerceTo('array').run(con).then (grps) ->
-            console.log user_id
-            console.log grps
-          # rdb.table("Groups").filter(rdb.row("users").contains(user_id)).coerceTo('array').run(con).then (grps) ->
-          # rdb.table("Groups").getAll(user_id, {index: "users"}).coerceTo('array').run(con).then (grps) ->
-          (Group.getGroupForUser(user_id)).then (group) ->
+          # console.log("exercise is active")
+          # console.log ("Got all groups")
+          (Group.getGroupForUserUnfiltered(user_id)).then (group) ->
+            # console.log("Now get solution for exercise")
             # Find solution id in user.solution for exercise_id, if existant
-            FindSolutionForExerciseInUserArray(user_id, exercise_id).run(con).then( (solution_id) ->
-              GetGroupSolutionForExercise(group.id, exercise_id).run(con).then( (groupSolution) ->
+            findSolutionForExerciseInUserArray(user_id, exercise_id).run(con).then (solution_id) ->
+              # console.log("Now get group solution")
+              getGroupSolutionForExercise(group.id, exercise_id).run(con).then (groupSolution) ->
+                # console.log(groupSolution)
                 if solution_id?
-                  console.log("solution_id!")
+                  # console.log("solution_id!")
                   # There is a solution for this exercise in the user array
                   # Is this exercise the exercise of the group?
                   rdb.branch(
-                    rdb.table("Solutions").getAll(rdb.args(rdb.table("Users").get(user_id).getField("solutions"))).filter(
-                      {"exercise": exercise_id}
-                      {"group_id": group.id}
-                    ).count().ne(0),
+                    rdb.table("Solutions").getAll(rdb.args(rdb.table("Users").get(user_id).getField("solutions"))).filter({
+                      "exercise": exercise_id
+                      "group_id": group.id
+                    }).count().ne(0),
                     # It is the exercise of the group
                     rdb.expr("Solution already exists"),
                     # It is not the solution of the group!
                     # Does the group have a solution?
-                    CopyOverOrDeleteOldSolution(group.id, user_id, solution_id, exercise_id)
+                    copyOverOrDeleteOldSolution(group.id, user_id, solution_id, exercise_id)
                   ).run(con)
                 else
-                  console.log("solution_id not!")
+                  # console.log("solution_id not!")
                   # Does the group have a solution?
-                  return CreateGroupSolutionAndUpdateUser(group.id, exercise_id, groupSolution, user_id)
-              )
-            )
+                  createGroupSolutionAndUpdateUser(group.id, exercise_id, groupSolution, user_id)
       # END_FUNCTION
