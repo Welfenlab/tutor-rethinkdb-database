@@ -6,7 +6,7 @@ rdbSetup = require 'rethinkdb-setup'
 tables =
   Exercises: "id"
   Solutions: ["id","exercise","group","lock","lastStore"]
-  Users: ["id","pseudonym", "previousGroup"]
+  Users: ["id","pseudonym", "previousGroup", {name: "solutions", options: multi: true}]
   Groups: ["id", {name: "users", options: multi: true}, {name: "pendingUsers", options: multi: true} ]
   Tutors: "name"
   PseudonymList: ["pseudonym", "user"]

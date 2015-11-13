@@ -23,7 +23,8 @@ var newDb = function(cb){
         rethinkdb: {
           db: dbName
         }
-      }
+      },
+      maxSolutionLocks: 10
   };
 
   // to chain promises easierly

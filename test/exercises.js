@@ -230,7 +230,7 @@ describe("Student Exercise Queries", function(){
     ], Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
-      {id: 1, pseudonym: 1}
+      {id: 1, pseudonym: 1, solutions: []}
     ], Exercises: [
       {id: 1,
         activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
@@ -247,7 +247,7 @@ describe("Student Exercise Queries", function(){
     return test.load({Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
-      {id: 1, pseudonym: 1}
+      {id: 1, pseudonym: 1, solutions: []}
     ], Exercises: [
       {id: 1,
         activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
@@ -259,6 +259,10 @@ describe("Student Exercise Queries", function(){
           (sol == null).should.be.false;
           sol.group.should.equal("A");
           sol.exercise.should.equal(1);
+          return test.db.Users.get(1).then(function (usr) {
+            (Array.isArray(usr.solutions)).should.be.true;
+            usr.solutions.should.have.length(1)
+          });
         });
       });
     });
@@ -269,7 +273,7 @@ describe("Student Exercise Queries", function(){
     ], Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
-      {id: 1, pseudonym: 1}
+      {id: 1, pseudonym: 1, solutions: []}
     ], Exercises: [
       {id: 1,
         activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
@@ -285,7 +289,7 @@ describe("Student Exercise Queries", function(){
     ], Groups: [
       {id: "A", users: [ 1 ], pendingUsers:[]}
     ], Users: [
-      {id: 1, pseudonym: 1}
+      {id: 1, pseudonym: 1, solutions: []}
     ], Exercises: [
       {id: 1,
         activationDate: rdb.ISO8601(moment().add(1,"days").toJSON()),
@@ -295,4 +299,97 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.createExerciseSolution(1,1).should.be.rejected;
     });
   });
+
+  it("should not do anything if user and group have solution", function() {
+    return test.load({
+      Solutions: [{id: 1, group: 1, exercise: 1}],
+      Groups: [{id: 1, users: [1], pendingUsers:[]}],
+      Users: [{id: 1, solutions: [1], pseudonym: "A"}],
+      Exercises: [
+        {id: 1, activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
+          dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
+      ]
+    })
+    .then(function() {
+      return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
+        return test.db.Users.get(1).then(function(usr) {
+          // should have overriden user solution
+          (Array.isArray(usr.solutions)).should.be.true;
+          usr.solutions.should.not.be.empty;
+          usr.solutions[0].should.equal(1);
+          return test.db.Exercises.getSolutions().then(function (solutions) {
+            Array.isArray(solutions).should.be.true;
+            solutions.should.have.length(1);
+          });
+        });
+      });
+    });
+  });
+
+  it("should update the users solution array if the group has one", function() {
+    return test.load({Solutions:[
+      {id: 1, group:1, exercise: 1,solution:["text","textA"]},
+      {id: 2, group:3, exercise: 1,solution:["text2","textA2"]},
+      {id: 3, group:2, exercise: 2,solution:["text3","textA3"]},
+      {id: 4, group:1, exercise: 2,solution:["text3","textA3"]}
+    ], Groups: [
+      {id: 1, users: [ 1 ],pendingUsers:[]},
+      {id: 2, users: [ 2 ],pendingUsers:[]},
+      {id: 3, users: [ 3 ],pendingUsers:[]}
+    ], Users: [
+      {id: 1, pseudonym: "a", solutions: [2]},
+      {id: 2, pseudonym: "b", solutions: []},
+      {id: 3, pseudonym: "c", solutions: []}
+    ], Exercises: [
+      {id: 1,
+        activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
+        dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
+    ]})
+    .then(function() {
+      return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
+        return test.db.Users.get(1).then(function(usr) {
+          // should have overriden user solution
+          (Array.isArray(usr.solutions)).should.be.true;
+          usr.solutions.should.not.be.empty;
+          usr.solutions[0].should.equal(1);
+          return test.db.Groups.getGroupForUser(1).then(function(group) {
+            // group.
+            return test.db.Exercises.getExerciseSolution(1, 1).then(function(solution) {
+              // should be unchanged
+              solution.id.should.equal(1);
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it("should update a solution field of a user, if the group has one", function() {
+    return test.load({Solutions:[
+      {id: 1, group:1, exercise: 1,solution:["text","textA"]},
+      {id: 2, group:3, exercise: 1,solution:["text2","textA2"]},
+      {id: 3, group:2, exercise: 2,solution:["text3","textA3"]},
+      {id: 4, group:1, exercise: 2,solution:["text3","textA3"]}
+    ], Groups: [
+      {id: 1, users: [ 1 ],pendingUsers:[]},
+      {id: 2, users: [ 2 ],pendingUsers:[]},
+      {id: 3, users: [ 3 ],pendingUsers:[]}
+    ], Users: [
+      {id: 1, pseudonym: "a", solutions: []},
+      {id: 2, pseudonym: "b", solutions: []},
+      {id: 3, pseudonym: "c", solutions: []}
+    ], Exercises: [
+      {id: 1,
+        activationDate: rdb.ISO8601(moment().subtract(7,"days").toJSON()),
+        dueDate: rdb.ISO8601(moment().add(1, "days").toJSON())}
+    ]})
+    .then(function() {
+      return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
+        return test.db.Users.get(1).then(function(usr) {
+          usr.solutions[0].should.equal(1);
+        });
+      });
+    });
+  });
+
 });
