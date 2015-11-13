@@ -139,9 +139,12 @@ describe("Group queries", function(){
               Users: [{id:1,pseudonym:"A"},{id:2,pseudonym:"B"},
                 {id:3,pseudonym:"C"},{id:4,pseudonym:"D"},{id:7,pseudonym:"G"}]})
     .then(function(){
-      return test.db.Groups.rejectInvitation(2, 2).then(function(){
+      return test.db.Groups.rejectInvitation(2, 2).then(function() {
         return test.db.Groups.pending(2).then(function(groups){
           groups.should.have.length(1);
+          return test.db.Groups.getGroup(2).then(function(group) {
+            group.pendingUsers.should.deep.equal([3]);
+          });
         });
       });
     });
