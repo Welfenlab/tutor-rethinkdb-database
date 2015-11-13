@@ -36,7 +36,10 @@ module.exports = (con, config) ->
           delete sol.inProcess
           return sol
 
-  # TODO
+  # param group_id: the users Group
+  # param user_id: the user
+  # param solution_id: the user solution for the exercise
+  # param exercise_id: the exercise we want to create a solution for
   createAndReplaceSolutionForUser = (group_id, user_id, solution_id, exercise_id) ->
     ###
     if group has solution for exercise
