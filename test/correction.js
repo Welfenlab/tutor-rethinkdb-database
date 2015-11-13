@@ -38,10 +38,25 @@ describe("Correction methods", function(){
     });
   });
   it("lists all pending corrections for a tutor", function(){
-    return test.load({Solutions:[{lock:"tutor",inProcess:true},{lock:"tutor"},{lock:"tutor",inProcess:false}]})
+    return test.load({Solutions:[{id: 1, lock:"tutor",inProcess:true},{id: 2, lock:"tutor"},{id: 3, lock:"tutor", inProcess:false}]})
     .then(function(){
       return test.db.Corrections.getUnfinishedSolutionsForTutor("tutor").then(function(sol){
         sol.should.have.length(1);
+        sol[0].id.should.equal(1);
+      });
+    });
+  });
+  it("lists all finished solutions for a tutor", function () {
+    return test.load({
+      Solutions: [
+        {id: 1, lock:"tutor",inProcess:true},
+        {id: 2, lock:"tutor"},
+        {id: 3, lock:"tutor",inProcess:false}
+      ]})
+    .then(function() {
+      return test.db.Corrections.getFinishedSolutionsForTutor("tutor").then(function(sol) {
+        sol.should.have.length(1);
+        sol[0].id.should.equal(3);
       });
     });
   });
