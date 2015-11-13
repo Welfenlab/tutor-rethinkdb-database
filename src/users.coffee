@@ -38,23 +38,15 @@ module.exports = (con, config) ->
         rdb.error("Pseudonym #{newPseudonym} already taken")).run(con)
 
     getTotalPoints: (user_id) ->
-      group = {}
-      rdb.table("Groups").getAll(user_id, {index: "users"}).nth(0).run(con)
-        .then (grp) ->
-          API.get user_id
-          group = grp
-        .then (user) ->
-          groups = user.previousGroups or []
-          groups.push(group.id)
-          # rdb.table("Solutions").getAll(group.id, {index: "group"}).
-          rdb.table("Solutions")
-            .getAll(rdb.args(groups), {index: "group"})
-            .filter(rdb.row("inProcess").eq(false))
-            .getField("results")
-            .getField("points")
-            .sum()
-            .default(0)
-            .run(con)
+      rdb.table("Solutions").getAll(
+        rdb.args(rdb.table("Users").get(user_id)("solutions"))
+      )
+      .filter( (solution) ->
+        solution.hasFields("results").and(solution.hasFields(results: 'points')).and(solution("inProcess").eq(false))
+      )
+      .map( (solution) ->
+        solution("results")("points").default(0)
+      ).sum().default(0).run(con)
 
     create: (user) ->
       if not user.id or not user.name or not user.pseudonym or not user.matrikel
