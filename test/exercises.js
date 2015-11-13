@@ -300,7 +300,7 @@ describe("Student Exercise Queries", function(){
     });
   });
 
-  it("should not create anything if user and group have solution", function() {
+  it("should not do anything if user and group have solution", function() {
     return test.load({
       Solutions: [{id: 1, group: 1, exercise: 1}],
       Groups: [{id: 1, users: [1], pendingUsers:[]}],
@@ -311,7 +311,18 @@ describe("Student Exercise Queries", function(){
       ]
     })
     .then(function() {
-      return test.db.Exercises.createExerciseSolution(1, 1).should.be.fulfilled;
+      return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
+        return test.db.Users.get(1).then(function(usr) {
+          // should have overriden user solution
+          (Array.isArray(usr.solutions)).should.be.true;
+          usr.solutions.should.not.be.empty;
+          usr.solutions[0].should.equal(1);
+          return test.db.Exercises.getSolutions().then(function (solutions) {
+            Array.isArray(solutions).should.be.true;
+            solutions.should.have.length(1);
+          });
+        });
+      });
     });
   });
 
@@ -338,12 +349,12 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.createExerciseSolution(1, 1).then(function() {
         return test.db.Users.get(1).then(function(usr) {
           // should have overriden user solution
-          console.log(usr);
           (Array.isArray(usr.solutions)).should.be.true;
-          usr.solutions.should.not.be.empty();
+          usr.solutions.should.not.be.empty;
           usr.solutions[0].should.equal(1);
-          return test.db.Group.getGroupForUserUnfiltered(1).then(function(group) {
-            return test.db.getExerciseSolution(1, 1).then(function(solution) {
+          return test.db.Groups.getGroupForUser(1).then(function(group) {
+            // group.
+            return test.db.Exercises.getExerciseSolution(1, 1).then(function(solution) {
               // should be unchanged
               solution.id.should.equal(1);
             });

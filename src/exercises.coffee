@@ -38,8 +38,6 @@ module.exports = (con, config) ->
 
   # TODO
   createAndReplaceSolutionForUser = (group_id, user_id, solution_id, exercise_id) ->
-    console.log("_4=_7|_8")
-
     ###
     if group has solution for exercise
       remove old solution from user
@@ -52,11 +50,13 @@ module.exports = (con, config) ->
       rdb.table("Solutions").getAll(group_id, {index: "group"}).count().ne(0),
       # The group has a solution already
       # -> delete the solution in the users solution array! -> POTENTIAL LOSS OF POINTS -> WARN USER
-      rdb.do(getGroupSolutionForExercise(group_id, solution_id), (newSolution) ->
-        rdb.do(rdb.table("Users").get(user_id).update({solutions: rdb.row("solutions").difference [solution_id]}), () ->
-          rdb.table("Users").get(user_id).update({
-            solutions: rdb.row("solutions").append(newSolution.id)
-          })
+      rdb.do(getGroupSolutionForExercise(group_id, exercise_id), (newSolution) ->
+        rdb.do(rdb.table("Users").get(user_id).update(
+            {solutions: rdb.table("Users").get(user_id)("solutions").difference [solution_id]}, nonAtomic: true
+          ), () ->
+          rdb.table("Users").get(user_id).update(() ->
+            solutions: rdb.table("Users").get(user_id)("solutions").append(newSolution("id"))
+          , nonAtomic: true)
         )
       )
       # Else set the groups solution to the users solution
@@ -69,16 +69,13 @@ module.exports = (con, config) ->
     )
 
   createGroupSolutionAndUpdateUser = (group_id, exercise_id, groupSolution, user_id) ->
-    console.log("createGroupSolutionAndUpdateUser")
     if groupSolution?
-      console.log("_5")
       # The group has a solution already
       # Assign solution id of group to user
       rdb.table("Users").get(user_id).update(
         solutions: rdb.row("solutions").append(groupSolution.id)
       ).run(con)
     else
-      console.log("_6")
       # There is no group solution and no user Solution
       rdb.table("Solutions").insert({
         group: group_id
@@ -134,7 +131,6 @@ module.exports = (con, config) ->
     # but not corresponding to the users group, it will be removed from this Users
     # solution list, except there is no solution for this group, it will then be copied over.
     createExerciseSolution: (user_id, exercise_id) ->
-      console.log("---------------------------------------")
       # isActive tests both things: whether the exercise is active and not expired
       return (API.isActive exercise_id).then (active) ->
         if !active
@@ -146,7 +142,6 @@ module.exports = (con, config) ->
             return findSolutionForExerciseInUserArray(user_id, exercise_id).run(con).then (solution) ->
               return getGroupSolutionForExercise(group.id, exercise_id).run(con).then (groupSolution) ->
                 if solution?
-                  console.log("_1")
                   # There is a solution for this exercise in the user array
                   # Is this exercise the exercise of the group?
                   return rdb.branch(
@@ -161,7 +156,9 @@ module.exports = (con, config) ->
                     createAndReplaceSolutionForUser(group.id, user_id, solution.id, exercise_id)
                   ).run(con)
                 else
-                  console.log("_2")
                   # Does the group have a solution?
                   return createGroupSolutionAndUpdateUser(group.id, exercise_id, groupSolution, user_id)
       # END_FUNCTION
+
+    getSolutions: () ->
+      rdb.table("Solutions").coerceTo('array').run(con)
