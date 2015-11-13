@@ -105,7 +105,7 @@ describe("Group queries", function(){
               Users: [{id:1,pseudonym:"A"},{id:2,pseudonym:"B"},
                 {id:3,pseudonym:"C"},{id:4,pseudonym:"D"},{id:7,pseudonym:"G"}]})
     .then(function(){
-      return test.db.Groups.joinGroup(2, 2).then(function() {
+      return test.db.Groups.joinGroup(2, 2).then(function(result) {
         return test.db.Groups.getGroupForUser(2).then(function(group){
           group.id.should.equal(2);
         })

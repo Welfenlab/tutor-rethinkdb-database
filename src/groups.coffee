@@ -105,9 +105,13 @@ module.exports = (con, config) ->
         rdb.table("Groups").get(group_id).replace((doc) ->
           doc.merge
             pendingUsers: doc("pendingUsers").setDifference([user_id]),
-            users: doc("users").setUnion([user_id])),
-        (res1,res2) -> res2),
+            users: doc("users").setUnion([user_id])
+        ),
+        getGroupForUser(user_id).default({failed: user_id}),
+        (res1,res2,res3) -> res3),
       rdb.error "User cannot join a group without invitation")).run(con)
+
+    #
 
   getGroups: () ->
     rdb.table("Groups").coerceTo('array').run(con)
