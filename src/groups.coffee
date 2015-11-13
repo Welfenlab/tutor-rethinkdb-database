@@ -4,6 +4,8 @@ moment = require 'moment'
 utils = require './utils'
 
 module.exports = (con, config) ->
+  # replaces all ids in a group with pseudonyms
+  # (do not pass the ids to the user)
   desensetizeGroupQuery = (query) ->
     query.merge((g) ->
       users: idListToPseudonymList g("users")
@@ -45,9 +47,11 @@ module.exports = (con, config) ->
         replaceStats: replaceStats
     )
 
+  # replaces pseudonyms with ids in a list
   pseudonymListToIdList = (plist) ->
     rdb.expr(plist).map((p) -> rdb.table("Users").getAll(p,index:"pseudonym").nth(0)("id"))
 
+  # replaces ids with pseudonyms in a list
   idListToPseudonymList = (idlist) ->
     idlist.map((id) -> rdb.table("Users").get(id)("pseudonym"))
 
@@ -55,12 +59,11 @@ module.exports = (con, config) ->
   desensetizeGroup = (query) ->
     desensetizeGroupQuery(query).run(con)
 
+  # see desensetizeGroupQuery
   desensetizeGroups = (query) ->
-    query.map((g) ->
-      g.merge
-        users: idListToPseudonymList g("users")
-        pendingUsers: idListToPseudonymList g("pendingUsers")).run(con)
+    desensetizeGroupQuery(query).run(con)
 
+  # create new group for a user
   createGroup = (user_id, group_users) ->
     rdb.do(
       pseudonymListToIdList(group_users),
