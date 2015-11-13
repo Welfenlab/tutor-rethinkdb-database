@@ -94,6 +94,11 @@ module.exports = (con, config) ->
     utils.toArray desensetizeGroups(rdb.table("Groups").getAll(user_id, {index: "pendingUsers"}))
 
   rejectInvitation: (user_id, group_id) ->
+    ###
+    rdb.table("Groups").get(group_id).update({
+      pendingUsers: rdb.table("Groups").get(group_id)("pendingUsers").setDifference([user_id])
+    }, nonAtomic: true ).run(con)
+    ###
     (rdb.table("Groups").get(group_id).replace (doc) ->
       doc.merge pendingUsers: doc("pendingUsers").setDifference([user_id])).run(con)
 
