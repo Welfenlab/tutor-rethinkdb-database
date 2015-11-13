@@ -8,6 +8,7 @@ rdb = require 'rethinkdb'
 module.exports = (con, config) ->
   config.maxSolutionLocks = config.maxSolutionLocks or 10
 
+  # tests if a solutions is locked or not by a tutor
   isFree = (doc,tutor) ->
     if tutor
       doc.hasFields("results").not().and(
@@ -16,12 +17,15 @@ module.exports = (con, config) ->
       doc.hasFields("results").not().and(
         doc.hasFields("lock").not().or(doc("lock").eq("")))
 
+  # are there results in a solution object?
   hasResult = (doc) ->
     doc.hasFields("results")
 
+  # has a tutor finished his correction?
   isFinalized = (doc) ->
     doc.hasFields("results").and(doc("inProcess").not())
 
+  # a tutor locks a solution for himself, so that he can correct it
   lockSolutionForTutor = (tutor, id) ->
     rdb.do(rdb.table("Solutions").get(id), (doc) ->
       rdb.branch(isFree(doc,tutor),
@@ -79,17 +83,16 @@ module.exports = (con, config) ->
           exerciseMap[v.group].is = v.reduction
         return  _.values(exerciseMap)
 
-
     getExerciseContingentForTutor: (name, exercise_id) ->
       tutorExerciseStatsQuery(name, exercise_id).run(con)
-    # get locked exercise for tutor
 
     # get the list of all results for an exercise
     getResultsForExercise: (exercise_id) ->
       utils.toArray rdb.table("Solutions").getAll(exercise_id, {index: "exercise"}).run(con)
 
-    getResultForExercise: (id) ->
-      rdb.table("Solutions").get(id).run(con)
+    # WARNING THIS FUNCTION IS NONSENSE, or a misnomer
+    # getResultForExercise: (id) ->
+    #   rdb.table("Solutions").get(id).run(con)
 
     setResultForExercise: (tutor, id, result) ->
       rdb.do(rdb.table("Solutions").get(id), (doc) ->

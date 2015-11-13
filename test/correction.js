@@ -74,6 +74,7 @@ describe("Correction methods", function(){
       });
     });
   });
+  /*  
   it("should be possible to store results for a locked solution", function(){
     return test.load({Solutions:[{id:1, lock:"tutor"}]})
     .then(function(){
@@ -85,6 +86,7 @@ describe("Correction methods", function(){
       });
     });
   });
+  */
   it("should not be possibe to lock more than 10 solutions by a single tutor", function() {
     return test.load(
       {Solutions: [
