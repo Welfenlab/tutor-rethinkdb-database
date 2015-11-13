@@ -37,16 +37,23 @@ module.exports = (con, config) ->
         rdb.table('Users').get(id).update(pseudonym: newPseudonym),
         rdb.error("Pseudonym #{newPseudonym} already taken")).run(con)
 
+    getTotalPointsQuery: (user) ->
+      rdb.branch(
+        user("solutions").count().ne(0),
+        rdb.table("Solutions").getAll(
+          rdb.args(user("solutions")) 
+        )
+        .filter( (solution) ->
+          solution.hasFields("results").and(solution.hasFields(results: 'points')).and(solution("inProcess").eq(false))
+        )
+        .map( (solution) ->
+          solution("results")("points").default(0)
+        ).sum().default(0),
+        rdb.expr(0)
+      )
+
     getTotalPoints: (user_id) ->
-      rdb.table("Solutions").getAll(
-        rdb.args(rdb.table("Users").get(user_id)("solutions"))
-      )
-      .filter( (solution) ->
-        solution.hasFields("results").and(solution.hasFields(results: 'points')).and(solution("inProcess").eq(false))
-      )
-      .map( (solution) ->
-        solution("results")("points").default(0)
-      ).sum().default(0).run(con)
+      @getTotalPointsQuery(rdb.table("Users").get(user_id)).run(con)
 
     create: (user) ->
       if not user.id or not user.name or not user.pseudonym or not user.matrikel

@@ -34,7 +34,7 @@ describe("Managing methods", function(){
   it("should fail if a tutor object is invalid", function(){
     return test.db.Manage.storeTutor({name:"t",pw:"ABC",contingent:1}).should.be.rejected;
   });
-  
+
   it("should fail if a tutor object is invalid", function(){
     return test.db.Manage.storeTutor({name:"t",password:"ABC",contingent:"1"}).should.be.rejected;
   });
@@ -106,6 +106,34 @@ describe("Managing methods", function(){
       return test.db.Manage.updateOldestSolution(300).then(function(results) {
         results.replaced.should.equal(1);
         results.errors.should.equal(0);
+      });
+    });
+  });
+  it("should list users", function() {
+    return test.load({
+      Solutions: [
+        {id: 1, exercise: 1, group: 1, results:{points: 4}, inProcess: false},
+        {id: 2, exercise: 1, group: 1, results:{points: 12}, inProcess: false}
+      ],
+      Groups: [
+        {id: 100, users: [1, 2], pendingUsers:[]},
+        {id: 200, users: [3], pendingUsers:[]}
+      ], Users: [
+        {id: 1, pseudonym: "A", solutions: []},
+        {id: 2, pseudonym: "B", solutions: [1]},
+        {id: 3, pseudonym: "C", solutions: [1, 2]}
+      ]
+    }).then(function() {
+      // i think the order is not guaranteed here, because of r.map
+      return test.db.Manage.listUsers().then(function(users) {
+        for (var i = 0; i != 3; ++i) {
+          if (users[i].id == 1)
+            users[i].totalPoints.should.equal(0);
+          else if (users[i].id == 2)
+            users[i].totalPoints.should.equal(4);
+          else if (users[i].id == 3)
+            users[i].totalPoints.should.equal(16);
+        }
       });
     });
   });

@@ -87,6 +87,8 @@ module.exports = (con, config) ->
   getGroupForUserUnfiltered: (user_id) ->
     rdb.table("Groups").getAll(user_id, {index: "users"}).nth(0).run(con)
 
+  getGroupForUserQuery: (user_id) -> getGroupForUser(user_id)
+
   # returns a list of groups with pending invitations
   pending: (user_id) ->
     utils.toArray desensetizeGroups(rdb.table("Groups").getAll(user_id, {index: "pendingUsers"}))

@@ -6,6 +6,9 @@ utils = require './utils'
 
 
 module.exports = (con,config) ->
+  Group = (require './groups')(con, config)
+  Exercises = (require './exercises')(con, config)
+  Users = (require './users')(con, config)
 
   storeTutor: (tutor) ->
     if !tutor.name? or !tutor.password? or !tutor.contingent?
@@ -27,10 +30,16 @@ module.exports = (con,config) ->
     (rdb.table("Exercises").insert exercise, conflict: "update").run con
 
   listExercises: ->
-    utils.toArray rdb.table("Exercises").run(con)
+    rdb.table("Exercises").coerceTo('array').run(con)
 
+  # Lists users and the group. also adds their total points
   listUsers: ->
-    utils.toArray rdb.table("Users").run(con)
+    rdb.table("Users").map( (user) ->
+      user.merge(
+        group: Group.getGroupForUserQuery(user("id"))
+        totalPoints: Users.getTotalPointsQuery(user)
+      )
+    ).without("solutions").coerceTo('array').run(con)
 
   listTutors: ->
     utils.toArray rdb.table("Tutors").without("pw").run(con)
