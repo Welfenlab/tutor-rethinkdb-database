@@ -99,6 +99,7 @@ module.exports = (con, config) ->
               e[k].tasks = _.map n.tasks, (n) ->
                 delete n.solution
                 delete n.solutionTest
+                delete n.internals
                 n
             resolve e
 
@@ -109,16 +110,18 @@ module.exports = (con, config) ->
             e.tasks = _.map e.tasks, (n) ->
               delete n.solution
               delete n.solutionTest
+              delete n.internals
               n
             resolve e
           else
             reject "Exercise with id #{id} not found"
-
+    ### we need to remove the sensitive information, currently no one uses getAllActive
     getAllActive: ->
       utils.toArray(rdb.table('Exercises').filter( (ex) ->
         ex('activationDate').lt(new Date())
         .and(ex('dueDate').gt new Date()) ).without("solutions").run(con))
-
+    ###
+    
     isActive: (id) ->
       utils.nonEmptyList(rdb.table("Exercises").getAll(id).filter( (ex) ->
         ex('activationDate').lt(new Date())
