@@ -61,7 +61,7 @@ describe("Student Exercise Queries", function(){
       return test.db.Exercises.getById(2).should.be.rejected;
     });
   });
-/*
+
   it("should be able to query all active exercises", function(){
     return test.load(
     {
@@ -76,7 +76,7 @@ describe("Student Exercise Queries", function(){
       });
     });
   });
-*/
+
   it("should hide solution information for a normal exercise query by id", function(){
     return test.load(
     {

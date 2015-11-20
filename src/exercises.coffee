@@ -115,12 +115,11 @@ module.exports = (con, config) ->
             resolve e
           else
             reject "Exercise with id #{id} not found"
-    ### we need to remove the sensitive information, currently no one uses getAllActive
+
     getAllActive: ->
       utils.toArray(rdb.table('Exercises').filter( (ex) ->
         ex('activationDate').lt(new Date())
-        .and(ex('dueDate').gt new Date()) ).without("solutions").run(con))
-    ###
+        .and(ex('dueDate').gt new Date()) ).without("solutions").without('solutionTest').without('internals').run(con))
     
     isActive: (id) ->
       utils.nonEmptyList(rdb.table("Exercises").getAll(id).filter( (ex) ->
