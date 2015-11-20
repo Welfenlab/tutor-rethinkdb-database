@@ -10,6 +10,20 @@ module.exports = (con,config) ->
   Exercises = (require './exercises')(con, config)
   Users = (require './users')(con, config)
 
+  # For pdfs
+  getUnprocessedSolutionSample: ->
+    rdb
+    .table("Solutions")
+    .eqJoin("exercise", rdb.table("Exercises"))
+    .filter(
+      # Is due, not processed so far and not in process?
+      rdb.row("right")("dueDate").lt(new Date()).and(
+        rdb.row("left")("processed").default(false).ne(true)
+      ).and(
+        rdb.row("left")("processingLock").default(false).ne(true)
+      )
+    ).sample(1)("left").nth(0).default(null).run con
+
   storeTutor: (tutor) ->
     if !tutor.name? or !tutor.password? or !tutor.contingent?
       Promise.reject("You must provide a name, password and contingent field")
@@ -46,6 +60,32 @@ module.exports = (con,config) ->
 
   listGroups: ->
     utils.toArray rdb.table("Groups").run(con)
+
+  # Locks a single solution which is due.
+  # Returns the locked solution, or undefined if none is available
+  lockSolutionForPdfProcessor: ->
+    @getUnprocessedSolutionSample().then (solution) ->
+      if (!solution)
+        Promise.reject "No more processable solution."
+        #new Promise (resolve) ->
+        #  resolve undefined
+      else
+        rdb
+        .table("Solutions")
+        .get(solution.id)
+        .update({"processingLock": true}, {returnChanges: true})("changes")("new_val").nth(0).run(con)
+
+  resetPdfForSolution: (solutionId) ->
+    rdb.table("Solutions").get(solutionId).replace (solution) ->
+      solution.without("processed").without("processingLock").without("pdf")
+
+  # Save the finished pdf file into the solution
+  insertFinishedPdf: (solutionId, pdfData)->
+    rdb.table("Solutions").get(solutionId).update(
+      processed: true
+      processingLock: false,
+      pdf: pdfData
+    ).run con
 
   updateOldestSolution: (minAge) ->
     minAge = minAge or 300
