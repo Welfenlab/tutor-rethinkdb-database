@@ -53,7 +53,7 @@ module.exports = (con, config) ->
       )
 
     getTotalPoints: (user_id) ->
-      @getTotalPointsQuery(rdb.table("Users").get(user_id)).run(con)
+      API.getTotalPointsQuery(rdb.table("Users").get(user_id)).run(con)
 
     create: (user) ->
       if not user.id or not user.name or not user.pseudonym or not user.matrikel
