@@ -57,6 +57,20 @@ describe("Managing methods", function(){
       })
     });
   });
+  
+  it("should create correct dates for an exercise", function(){
+    return test.db.Manage.storeExercise(
+      {
+        id:1,
+        activationDate: moment().subtract(1, "days").toJSON(),
+        dueDate: moment().add(1, "days").toJSON()
+      }).then(function(){
+      return test.db.Exercises.getAllActive().then(function(exercises){
+        exercises.should.have.length(1);
+        exercises[0].id.should.equal(1);
+      })
+    });
+  });
   it("should update an existing exercise by ID", function(){
     return test.load({Exercises:[{id:1,number:2, activationDate: moment().toJSON(), dueDate: moment().toJSON()}]})
     .then(function(){

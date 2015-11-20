@@ -39,8 +39,8 @@ module.exports = (con,config) ->
     rdb.table('Exercises').get(id).run(con)
 
   storeExercise: (exercise) ->
-    exercise.activationDate = exercise.activationDate
-    exercise.dueDate = exercise.dueDate
+    exercise.activationDate = rdb.ISO8601(exercise.activationDate)
+    exercise.dueDate = rdb.ISO8601(exercise.dueDate)
     (rdb.table("Exercises").insert exercise, conflict: "update").run con
 
   listExercises: ->
