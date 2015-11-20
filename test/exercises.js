@@ -95,6 +95,7 @@ describe("Student Exercise Queries", function(){
         for (var i = 0; i != ex.tasks.length; ++i) {
           ex.tasks[i].should.not.have.key("solution");
           ex.tasks[i].should.not.have.key("solutionTest");
+          ex.tasks[i].should.not.have.key("internals");
         }
       });
     });
@@ -135,6 +136,7 @@ describe("Student Exercise Queries", function(){
           for (var i = 0; i != ex[j].tasks.length; ++i) {
             ex[j].tasks[i].should.not.have.key("solution");
             ex[j].tasks[i].should.not.have.key("solutionTest");
+            ex[j].tasks[i].should.not.have.key("internals");
           }
       });
     });
