@@ -41,7 +41,7 @@ module.exports = (con, config) ->
       rdb.branch(
         user("solutions").count().ne(0),
         rdb.table("Solutions").getAll(
-          rdb.args(user("solutions")) 
+          rdb.args(user("solutions"))
         )
         .filter( (solution) ->
           solution.hasFields("results").and(solution.hasFields(results: 'points')).and(solution("inProcess").eq(false))
@@ -58,6 +58,7 @@ module.exports = (con, config) ->
     create: (user) ->
       if not user.id or not user.name or not user.pseudonym or not user.matrikel
         return Promise.reject "User information incomplete ("+JSON.stringify(user)+")"
+      user.solutions = []
       rdb.table('Users').insert(user,{conflict:"update"}).run(con).then ->
         API.lockRandomPseudonymFromList user.id, generatePseudonymList user.pseudonym
           .then (p) ->

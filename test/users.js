@@ -64,6 +64,7 @@ describe("User queries", function(){
       return test.db.Users.get(1).then(function(u){
         u.pseudonym.indexOf("P").should.equal(0);
         u.id.should.equal(1);
+        u.solutions.should.deep.equal([]);
         u.matrikel.should.equal("12345678");
       });
     });
