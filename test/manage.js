@@ -123,6 +123,27 @@ describe("Managing methods", function(){
       });
     });
   });
+  it("should list all solutions for users", function(){
+    return test.load({
+      Solutions: [
+        {id: 1, exercise: 1, group: 1, results:{points: 4}, inProcess: false},
+        {id: 2, exercise: 2, group: 1, results:{points: 12}, inProcess: false},
+        {id: 3, exercise: 1, group: 2, results:{points: 12}, inProcess: false}
+      ],
+      Groups: [
+        {id: 1, users: [1, 2], pendingUsers:[]},
+        {id: 2, users: [3], pendingUsers:[]}
+      ], Users: [
+        {id: 1, pseudonym: "A", solutions: []},
+        {id: 2, pseudonym: "B", solutions: [1]},
+        {id: 3, pseudonym: "C", solutions: [1, 2]}
+      ]
+    }).then(function(){
+      return test.db.Manage.getStudentsSolutions(3).then(function(sols){
+        sols.should.have.length(1);
+      })
+    })
+  });
   it("should list users", function() {
     return test.load({
       Solutions: [
