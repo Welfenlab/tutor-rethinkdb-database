@@ -206,6 +206,15 @@ describe("Managing methods", function(){
       })
     })
   });
+  it("list solutions for an user creates an error when the user does not exist", function(){
+    return test.load({
+      Users: [
+        { id: 100, pseudonym: "A", solutions: [] }
+      ]
+    }).then(function(){
+      return test.db.Manage.getStudentsSolutions("a").should.be.rejected
+    })
+  })
   it("should list users", function() {
     return test.load({
       Solutions: [
