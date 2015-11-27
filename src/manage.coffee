@@ -69,7 +69,7 @@ module.exports = (con,config) ->
     
     querySolutions: (solution_id) ->
       rdb.table("Solutions").filter( (s) ->
-        s("id").match(solution_id)).coerceTo('array').run(con)
+        s("id").match(solution_id)).without("pdf").limit(10).coerceTo('array').run(con)
 
     lockSpecificSolutionForPdfProcessor: (id) ->
       rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true}).run con

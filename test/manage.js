@@ -150,6 +150,7 @@ describe("Managing methods", function(){
     }).then(function(){
       return test.db.Manage.querySolutions('2').then(function(list){
         list.should.have.length(2)
+        list[0].should.not.have.key("pdf")
       })
     })
   });
@@ -200,7 +201,8 @@ describe("Managing methods", function(){
       ]
     }).then(function(){
       return test.db.Manage.getStudentsSolutions(3).then(function(sols){
-        sols.should.have.length(1);
+        sols.should.have.length(1)
+        sols[0].should.not.have.key("pdf")
       })
     })
   });
