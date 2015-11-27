@@ -140,6 +140,19 @@ describe("Managing methods", function(){
       });
     });
   });
+  it("has a query method for solutions", function(){
+    return test.load({
+      Solutions: [
+        {id: "12", exercise: 1, group: 1, results:{points: 4}, inProcess: false},
+        {id: "22", exercise: 2, group: 1, results:{points: 12}, inProcess: false},
+        {id: "33", exercise: 1, group: 2, results:{points: 12}, inProcess: false}
+      ]
+    }).then(function(){
+      return test.db.Manage.querySolutions('2').then(function(list){
+        list.should.have.length(2)
+      })
+    })
+  });
   it("should update the oldest solution", function() {
     return test.load({
       Exercises: [
@@ -169,6 +182,27 @@ describe("Managing methods", function(){
         results.errors.should.equal(0);
       });
     });
+  });
+  it("should list all solutions for users", function(){
+    return test.load({
+      Solutions: [
+        {id: 1, exercise: 1, group: 1, results:{points: 4}, inProcess: false},
+        {id: 2, exercise: 2, group: 1, results:{points: 12}, inProcess: false},
+        {id: 3, exercise: 1, group: 2, results:{points: 12}, inProcess: false}
+      ],
+      Groups: [
+        {id: 1, users: [1, 2], pendingUsers:[]},
+        {id: 2, users: [3], pendingUsers:[]}
+      ], Users: [
+        {id: 1, pseudonym: "A", solutions: []},
+        {id: 2, pseudonym: "B", solutions: [1]},
+        {id: 3, pseudonym: "C", solutions: [1, 2]}
+      ]
+    }).then(function(){
+      return test.db.Manage.getStudentsSolutions(3).then(function(sols){
+        sols.should.have.length(1);
+      })
+    })
   });
   it("should list users", function() {
     return test.load({
