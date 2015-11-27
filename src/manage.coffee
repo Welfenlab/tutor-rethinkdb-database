@@ -61,12 +61,12 @@ module.exports = (con,config) ->
 
     listGroups: ->
       utils.toArray rdb.table("Groups").run(con)
-    
+
     getStudentsSolutions: (user_id) ->
       (Group.getGroupForUser(user_id)).then (group) ->
         rdb.table("Solutions").getAll(group.id, {index: "group"}).coerceTo('array')
         .without("pdf").run(con)
-    
+
     querySolutions: (solution_id) ->
       rdb.table("Solutions").filter( (s) ->
         s("id").match(solution_id)).without("pdf").limit(10).coerceTo('array').run(con)
@@ -102,6 +102,13 @@ module.exports = (con,config) ->
         processingLock: false,
         pdf: pdfData
       ).run con
+
+    getTestsFromExercise: (exerciseId) ->
+      rdb.table("Exercises").get(exerciseId)("tasks").pluck("number", "solutionTests", "tests")
+      .coerceTo("array").run con
+
+    pluckSolution: (solutionId, pluckArr) ->
+      rdb.table("Solutions").get(solutionId).pluck(rdb.args(pluckArr)).run con
 
     # Store all solutions that are due and haven't been stored yet.
     storeAllFinalSolutions: () ->

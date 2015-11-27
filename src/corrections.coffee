@@ -122,6 +122,9 @@ module.exports = (con, config) ->
     getSolutionById: (solution_id) ->
       rdb.table("Solutions").get(solution_id).run(con)
 
+    getSolutionTasks: (solution_id) ->
+      rdb.table("Solutions").get(solution_id)("tasks").run(con)
+
     getSolutionsForGroup: (group_id) ->
       utils.toArray rdb.table("Solutions").getAll(group_id, {index: "group"}).run(con)
 
