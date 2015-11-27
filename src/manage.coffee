@@ -94,6 +94,34 @@ module.exports = (con,config) ->
         pdf: pdfData
       ).run con
 
+    # Store all solutions that are due and haven't been stored yet.
+    storeAllFinalSolutions: () ->
+      (rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises")).filter(
+        # has not been stored before
+        rdb.row("left")("finalSolutionStored")
+        .default(false)
+        .eq(false)
+        .and(rdb.row("right")("dueDate").lt(rdb.now()))
+      ).map ( (solution) ->
+        solution.merge({
+          finalSolutionStored: true,
+          tasks: solution("right")("tasks").map( (task) ->
+            rdb
+            .db(config.sharejs.rethinkdb.db)
+            .table(config.sharejs.tableName)
+            .get(
+              rdb.add(
+                solution("left")("group").coerceTo("string"),
+                ":",
+                solution("left")("exercise").coerceTo("string"),
+                ":",
+                task("number").coerceTo("string")
+              )
+            )
+          )
+        })
+      )).coerceTo("array").run con
+
     updateOldestSolution: (minAge) ->
       minAge = minAge or 300
       if !config.sharejs?.rethinkdb?.db?
@@ -112,7 +140,7 @@ module.exports = (con,config) ->
             tasks: oldest("right")("tasks").map( (task) ->
               # left = Solutions
               # right = Exercises
-              # id = group : exercises : task("number")
+              # id = group : exercise : task("number")
               rdb.db(config.sharejs.rethinkdb.db)
                 .table(config.sharejs.tableName)
                 .get(

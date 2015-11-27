@@ -57,7 +57,7 @@ describe("Managing methods", function(){
       })
     });
   });
-  
+
   it("should create correct dates for an exercise", function(){
     return test.db.Manage.storeExercise(
       {
@@ -90,6 +90,53 @@ describe("Managing methods", function(){
         tutors.should.have.length(2);
         tutors[0].should.have.key("name");
         tutors[1].should.not.have.key("pw");
+      });
+    });
+  });
+  it("should copy over all final solutions ", function() {
+    return test.load({
+      Exercises: [
+        {
+          id: 1,
+          dueDate: rdb.ISO8601(moment().subtract(1, "h").toJSON()),
+          tasks: [{number: 1}, {number: 2}]
+        },
+        {
+          id: 2,
+          dueDate: rdb.ISO8601(moment().add(1, "h").toJSON()),
+          tasks: [{number: 2}]
+        }
+      ],
+      Solutions: [
+        {
+          exercise: 1,
+          group: 16,
+          id: 1
+        },
+        {
+          exercise: 1,
+          group: 16,
+          id: 2
+        },
+        {
+          exercise: 2,
+          group: 16,
+          id: 3
+        }
+      ],
+      ShareJsTable: [
+        {id: "16:1:1"},
+        {id: "16:1:2"}
+      ]
+    })
+    .then(function() {
+      return test.db.Manage.storeAllFinalSolutions().then(function(solutions) {
+        return _.forEach(solutions, function(n, key) {
+          n.finalSolutionStored.should.equal(true);
+          n.tasks.should.have.length(2);
+          n.tasks[0].id.should.equal("16:1:1");
+          n.tasks[1].id.should.equal("16:1:2");
+        });
       });
     });
   });
