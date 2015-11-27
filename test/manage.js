@@ -93,6 +93,19 @@ describe("Managing methods", function(){
       });
     });
   });
+  it("has a query method for solutions", function(){
+    return test.load({
+      Solutions: [
+        {id: "12", exercise: 1, group: 1, results:{points: 4}, inProcess: false},
+        {id: "22", exercise: 2, group: 1, results:{points: 12}, inProcess: false},
+        {id: "33", exercise: 1, group: 2, results:{points: 12}, inProcess: false}
+      ]
+    }).then(function(){
+      return test.db.Manage.querySolutions('2').then(function(list){
+        list.should.have.length(2)
+      })
+    })
+  });
   it("should update the oldest solution", function() {
     return test.load({
       Exercises: [

@@ -64,7 +64,12 @@ module.exports = (con,config) ->
     
     getStudentsSolutions: (user_id) ->
       (Group.getGroupForUser(user_id)).then (group) ->
-        rdb.table("Solutions").getAll(group.id, {index: "group"}).coerceTo('array').run(con)
+        rdb.table("Solutions").getAll(group.id, {index: "group"}).coerceTo('array')
+        .without("pdf").run(con)
+    
+    querySolutions: (solution_id) ->
+      rdb.table("Solutions").filter( (s) ->
+        s("id").match(solution_id)).coerceTo('array').run(con)
 
     lockSpecificSolutionForPdfProcessor: (id) ->
       rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true}).run con
