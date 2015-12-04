@@ -17,6 +17,7 @@ module.exports = (con, config) ->
   Users: (require './users')(con,config)
   Groups: (require './groups')(con,config)
   Manage: (require './manage')(con,config)
+  Jobs: (require './jobs')(con,config)
   Rethinkdb: rdb
   Utils:
     Empty: -> utils.empty con, conf # remove all data from all tables!!!!!!

@@ -12,6 +12,7 @@ tables =
   PseudonymList: ["pseudonym", "user"]
   session: "id"
   ShareJsTable: "id"
+  Jobs: ["id", "name", "data", "type"]
 
 module.exports =
   toArray: (promise) ->
