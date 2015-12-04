@@ -138,6 +138,30 @@ module.exports = (con,config) ->
         })
       )).coerceTo("array").run con
 
+    # Store just one solution, does not perform checkings and is meant to be used for admins.
+    storeSolution: (sid) ->
+      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises"))
+      .filter(rdb.row("left")("id").eq(sid))
+      .map( (solution) ->
+        solution.merge({
+          finalSolutionStored: rdb.table("Exercises").get(solution("right")("id")),
+          tasks: solution("right")("tasks").map( (task) ->
+            rdb
+            .db(config.sharejs.rethinkdb.db)
+            .table(config.sharejs.tableName)
+            .get(
+              rdb.add(
+                solution("left")("group").coerceTo("string"),
+                ":",
+                solution("left")("exercise").coerceTo("string"),
+                ":",
+                task("number").coerceTo("string")
+              )
+            )
+          )
+        })
+      ).coerceTo('array').run con
+
     updateOldestSolution: (minAge) ->
       minAge = minAge or 300
       if !config.sharejs?.rethinkdb?.db?
