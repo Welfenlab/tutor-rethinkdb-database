@@ -37,6 +37,21 @@ describe("Correction methods", function(){
       });
     });
   });
+  it("should return the processed flag", function() {
+    return test.load({
+      Solutions: [
+        {id: 0, processed: false},
+        {id: 1, processed: true}
+      ]
+    }).then(function() {
+      return test.db.Corrections.hasPdf(0).then(function(has) {
+        has.should.equal(false);
+        return test.db.Corrections.hasPdf(1).then(function(has2) {
+          has2.should.equal(true);
+        });
+      });
+    });
+  });
   it("lists all pending corrections for a tutor", function(){
     return test.load({Solutions:[{id: 1, lock:"tutor",inProcess:true},{id: 2, lock:"tutor"},{id: 3, lock:"tutor", inProcess:false}]})
     .then(function(){
@@ -74,7 +89,7 @@ describe("Correction methods", function(){
       });
     });
   });
-  /*  
+  /*
   it("should be possible to store results for a locked solution", function(){
     return test.load({Solutions:[{id:1, lock:"tutor"}]})
     .then(function(){
