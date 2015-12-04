@@ -108,6 +108,9 @@ module.exports = (con, config) ->
           rdb.error "Cannot finish solution, are you missing a result or are not authorized?"
           )).run(con)
 
+    hasPdf: (solutionId) ->
+      rdb.table("Solutions").get(solutionId).getField("processed").run con;
+
     getUserSolutions: (user) ->
       Groups.getGroupForUser(user).then (group) ->
         utils.toArray (rdb.table("Solutions").filter (s) -> s("group").eq(group.id)).run(con)
