@@ -113,10 +113,15 @@ module.exports = (con,config) ->
 
     # Save the finished pdf file into the solution
     insertFinishedPdf: (solutionId, pdfData)->
-      rdb.table("Solutions").get(solutionId).update(
-        processed: true
-        processingLock: false,
-        pdf: pdfData
+      rdb.do(
+        rdb.table("Solutions").get(solutionId).update(
+          processed: true
+          pdf: pdfData,
+          pdfGenerationDate: rdb.now()
+        ),
+        rdb.table("Solutions").get(solutionId).replace((solution) ->
+          solution.without("processingLock")
+        )
       ).run con
 
     getTestsFromExercise: (exerciseId) ->
