@@ -184,6 +184,72 @@ describe("Managing methods", function(){
       });
     });
   });
+  it("should do nothing when updating the oldest solution if there is none", function() {
+    return test.load({
+      Exercises: [
+        {id:1,number:1, activationDate: rdb.ISO8601(moment().toJSON()), dueDate: rdb.ISO8601(moment().toJSON()),
+        tasks: [{id: 0, number: 1, maxPoints: 10, solution: "Loesung", text: "Text"}]}
+      ],
+      Solutions: [
+      ],
+      Groups: [
+        {id:16, pendingUsers: [], users: [4096]}
+      ],
+      Users: [
+        {id:4096, pseudonym: "Slick Dijkstra"}
+      ]
+    })
+    .then(function() {
+      return test.db.Manage.updateOldestSolution(300).should.be.fulfilled;
+    });
+  });
+  it("should store a final solution sample", function() {
+    return test.load({
+      Exercises: [
+        {id:1,number:1, activationDate: rdb.ISO8601(moment().toJSON()), dueDate: rdb.ISO8601(moment().subtract(1, 'days').toJSON()),
+        tasks: [{id: 0, number: 1, maxPoints: 10, solution: "Loesung", text: "Text"}]}
+      ],
+      Solutions: [
+        {
+          exercise: 1,
+          group: 16,
+          id: 256,
+          lastStore: rdb.now().sub(350),
+          tasks: []
+        },
+      ],
+      Groups: [
+        {id:16, pendingUsers: [], users: [4096]}
+      ],
+      Users: [
+        {id:4096, pseudonym: "Slick Dijkstra"}
+      ],
+      ShareJsTable: [{id:"16:1:1", _data:""}]
+    })
+    .then(function() {
+      return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
+    });
+  });
+  it("should do nothing on storing a final solution sample, if there is none", function() {
+    return test.load({
+      Exercises: [
+        {id:1,number:1, activationDate: rdb.ISO8601(moment().toJSON()), dueDate: rdb.ISO8601(moment().subtract(1, 'days').toJSON()),
+        tasks: [{id: 0, number: 1, maxPoints: 10, solution: "Loesung", text: "Text"}]}
+      ],
+      Solutions: [
+      ],
+      Groups: [
+        {id:16, pendingUsers: [], users: [4096]}
+      ],
+      Users: [
+        {id:4096, pseudonym: "Slick Dijkstra"}
+      ],
+      ShareJsTable: [{id:"16:1:1", _data:""}]
+    })
+    .then(function() {
+      return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
+    });
+  });
   it("should list all solutions for users", function(){
     return test.load({
       Solutions: [
@@ -201,10 +267,10 @@ describe("Managing methods", function(){
       ]
     }).then(function(){
       return test.db.Manage.getStudentsSolutions(3).then(function(sols){
-        sols.should.have.length(1)
-        sols[0].should.not.have.key("pdf")
-      })
-    })
+        sols.should.have.length(1);
+        sols[0].should.not.have.key("pdf");
+      });
+    });
   });
   it("list solutions for an user creates an error when the user does not exist", function(){
     return test.load({
@@ -212,9 +278,53 @@ describe("Managing methods", function(){
         { id: 100, pseudonym: "A", solutions: [] }
       ]
     }).then(function(){
-      return test.db.Manage.getStudentsSolutions("a").should.be.rejected
+      return test.db.Manage.getStudentsSolutions("a").should.be.rejected;
     })
-  })
+  });
+  it("should lock a solution for the pdf processor", function() {
+    return test.load({
+      Exercises: [
+        {
+          id: 1,
+          dueDate: rdb.ISO8601(moment().subtract(1, "h").toJSON()),
+          tasks: [{number: 1}, {number: 2}]
+        },
+        {
+          id: 2,
+          dueDate: rdb.ISO8601(moment().subtract(1, "h").toJSON()),
+          tasks: [{number: 2}],
+          processed: true
+        }
+      ],
+      Solutions: [
+        {
+          exercise: 1,
+          group: 16,
+          id: 1
+        },
+        {
+          exercise: 1,
+          group: 16,
+          id: 2
+        },
+        {
+          exercise: 2,
+          group: 16,
+          id: 3
+        }
+      ],
+      ShareJsTable: [
+        {id: "16:1:1"},
+        {id: "16:1:2"}
+      ]
+    }).then(function(){
+      return test.db.Manage.lockSolutionForPdfProcessor().then(function(result) {
+        result.exercise.should.equal(1);
+        result.group.should.equal(16);
+        result.id.should.equal(1);
+      });
+    });
+  });
   it("should list users", function() {
     return test.load({
       Solutions: [
