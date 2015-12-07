@@ -12,19 +12,6 @@ module.exports = (con,config) ->
 
   # For pdfs
   API =
-    getUnprocessedSolutionSample: ->
-      rdb
-      .table("Solutions")
-      .eqJoin("exercise", rdb.table("Exercises"))
-      .filter(
-        # Is due, not processed so far and not in process?
-        rdb.row("right")("dueDate").lt(new Date()).and(
-          rdb.row("left")("processed").default(false).ne(true)
-        ).and(
-          rdb.row("left")("processingLock").default(false).ne(true)
-        )
-      ).sample(1)("left").nth(0).default(null).run con
-
     storeTutor: (tutor) ->
       if !tutor.name? or !tutor.password? or !tutor.contingent?
         Promise.reject("You must provide a name, password and contingent field")
@@ -71,19 +58,43 @@ module.exports = (con,config) ->
       rdb.table("Solutions").filter( (s) ->
         s("id").match(solution_id)).without("pdf").limit(10).coerceTo('array').run(con)
 
+    # Also stores the last sharejs data
     lockSpecificSolutionForPdfProcessor: (id) ->
-      rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true}).run con
+      rdb.do(
+        API.storeSolution(id),
+        rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true})
+      )
 
+    ############################################################################
     # Locks a single solution which is due.
     # Returns the locked solution, or undefined if none is available
+    #
+    # A solution sample must fulfill the following conditions, to be processable
+    # - the exercise must be due
+    # - it must not have benn processed so far
+    # - it must not be in process (processingLock)
+    ############################################################################
     lockSolutionForPdfProcessor: ->
-      API.getUnprocessedSolutionSample().then (solution) ->
-        if (!solution)
-          Promise.reject "No more processable solution."
-          #new Promise (resolve) ->
-          #  resolve undefined
-        else
-          API.lockSpecificSolutionForPdfProcessor(solution.id)
+      rdb.do(
+        rdb
+        .table("Solutions")
+        .eqJoin("exercise", rdb.table("Exercises"))
+        .filter((sol) ->
+          # Is due, not processed so far and not in process?
+          sol("right")("dueDate").lt(new Date()).and(
+            sol("left")("processed").default(false).ne(true)
+          ).and(
+            sol("left")("processingLock").default(false).ne(true)
+          )
+        ).sample(1).nth(0).default(null), (solution) ->
+          rdb.branch(
+            rdb.expr(solution).ne(null),
+            API.lockSpecificSolutionForPdfProcessor(solution("left")("id")).do(
+              rdb.expr(solution)("left")
+            ),
+            rdb.expr(solution) # return null
+          )
+      ).run con
 
     resetPdfForSolution: (solutionId) ->
       rdb.table("Solutions").get(solutionId).run(con).then( (result) ->
@@ -94,6 +105,11 @@ module.exports = (con,config) ->
             solution.without("processed").without("processingLock").without("pdf")
           ).run con
       )
+
+    resetPdfForAllSolutions: () ->
+      rdb.table("Solutions").replace((solution) ->
+        solution.without("processed").without("processingLock").without("pdf")
+      ).run con
 
     # Save the finished pdf file into the solution
     insertFinishedPdf: (solutionId, pdfData)->
@@ -138,13 +154,16 @@ module.exports = (con,config) ->
         })
       )).coerceTo("array").run con
 
-    # Store just one solution, does not perform checkings and is meant to be used for admins.
-    storeSolution: (sid) ->
-      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises"))
-      .filter(rdb.row("left")("id").eq(sid))
-      .map( (solution) ->
+    # Stores just one final solution, for load balancing
+    storeFinalSolutionSample: () ->
+      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises")).filter(
+        rdb.row("left")("finalSolutionStored")
+        .default(false)
+        .eq(false)
+        .and(rdb.row("right")("dueDate").lt(rdb.now()))
+      ).sample(1).map( (solution) ->
         solution.merge({
-          finalSolutionStored: rdb.table("Exercises").get(solution("right")("id")),
+          finalSolutionStored: true,
           tasks: solution("right")("tasks").map( (task) ->
             rdb
             .db(config.sharejs.rethinkdb.db)
@@ -160,12 +179,79 @@ module.exports = (con,config) ->
             )
           )
         })
-      ).coerceTo('array').run con
+      ).run con
 
+    # Store just one solution, does not perform checkings and is meant to be used for admins.
+    storeSolution: (sid) ->
+      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises"))
+      .filter((solution) -> solution("left")("id").eq(sid))
+      .map( (solution) ->
+        solution.merge({
+          #finalSolutionStored: rdb.table("Exercises").get(solution("right")("id")),
+          finalSolutionStored: solution("right")("dueDate").lt(rdb.now()),
+          tasks: solution("right")("tasks").map( (task) ->
+            rdb
+            .db(config.sharejs.rethinkdb.db)
+            .table(config.sharejs.tableName)
+            .get(
+              rdb.add(
+                solution("left")("group").coerceTo("string"),
+                ":",
+                solution("left")("exercise").coerceTo("string"),
+                ":",
+                task("number").coerceTo("string")
+              )
+            )
+          )
+        })
+      ).coerceTo('array')
+
+    ############################################################################
+    # UpdateOldestSolution copies the sharejs data over into the solution table
+    # for the solution that hasn't been updated the longest.
+    #
+    # In order to update this solution, the stored solution must not be final
+    # and older than minAge seconds.
+    ############################################################################
     updateOldestSolution: (minAge) ->
       minAge = minAge or 300
       if !config.sharejs?.rethinkdb?.db?
         return Promise.reject "No sharejs database defined"
+
+      rdb.do(
+        rdb.table("Solutions")
+          .orderBy({index: "lastStore"})
+          .filter(
+            rdb.row("lastStore").add(minAge).lt(rdb.now()).and(
+              rdb.row("finalSolutionStored").default(false).eq(false)
+            )
+          )
+          .eqJoin('exercise', rdb.table("Exercises")).nth(0).default(null),
+        (oldest) ->
+          rdb.branch(
+            rdb.expr(oldest).ne(null),
+            rdb.table("Solutions").get(oldest("left")("id")).update({
+              lastStore: rdb.now()
+              finalSolutionStored: oldest("right")("dueDate").lt(rdb.now())
+              tasks: oldest("right")("tasks").map( (task) ->
+                # left = Solutions
+                # right = Exercises
+                # id = group : exercise : task("number")
+                rdb.db(config.sharejs.rethinkdb.db)
+                  .table(config.sharejs.tableName)
+                  .get(
+                    rdb.add(oldest("left")("group").coerceTo("string"),":",oldest("right")("id").coerceTo("string"),":",task("number").coerceTo("string"))
+                  ).pluck("_data")
+              ).map (s) ->
+                s.merge({"solution": s("_data")}).without("_data")
+              } , {nonAtomic: true}
+            ),
+            {} # noop
+          )
+      ).run con
+
+      # old less robust and slower implementation, kept in case something was missed
+      ###
       rdb.do(
         rdb.table("Solutions")
           .orderBy({index: "lastStore"})
@@ -190,3 +276,4 @@ module.exports = (con,config) ->
               s.merge({"solution": s("_data")}).without("_data")
             } , {nonAtomic: true})
           ).run(con)
+      ###
