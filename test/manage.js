@@ -302,11 +302,6 @@ describe("Managing methods", function(){
           id: 1
         },
         {
-          exercise: 1,
-          group: 16,
-          id: 2
-        },
-        {
           exercise: 2,
           group: 16,
           id: 3,
