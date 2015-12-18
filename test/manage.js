@@ -292,8 +292,7 @@ describe("Managing methods", function(){
         {
           id: 2,
           dueDate: rdb.ISO8601(moment().subtract(1, "h").toJSON()),
-          tasks: [{number: 2}],
-          processed: true
+          tasks: [{number: 2}]
         }
       ],
       Solutions: [
@@ -310,7 +309,8 @@ describe("Managing methods", function(){
         {
           exercise: 2,
           group: 16,
-          id: 3
+          id: 3,
+          processed: true
         }
       ],
       ShareJsTable: [
