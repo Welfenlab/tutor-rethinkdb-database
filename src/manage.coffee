@@ -61,7 +61,7 @@ module.exports = (con,config) ->
     # Also stores the last sharejs data
     lockSpecificSolutionForPdfProcessorQuery: (id) ->
       rdb.do(
-        API.storeSolution(id),
+        API.storeSingleSolutionQuery(id),
         rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true})
       )
 
@@ -178,8 +178,8 @@ module.exports = (con,config) ->
       )
 
     storeTestResults: (sid, resultArray) ->
-      rdb.table("Solutions").get(sid).update(
-        tasks: rdb.merge(rdb.row("tasks"), rdb.expr(resultArray))
+      rdb.table("Solutions").get(sid).update((solution) ->
+        return solution.row("tasks").merge(rdb.expr(resultArray))
       ).run con
 
     storeSolution: (sid) ->

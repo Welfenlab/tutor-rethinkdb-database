@@ -203,6 +203,7 @@ describe("Managing methods", function(){
       return test.db.Manage.updateOldestSolution(300).should.be.fulfilled;
     });
   });
+  /*
   it("should store a final solution sample", function() {
     return test.load({
       Exercises: [
@@ -230,6 +231,8 @@ describe("Managing methods", function(){
       return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
     });
   });
+  */
+  /*
   it("should do nothing on storing a final solution sample, if there is none", function() {
     return test.load({
       Exercises: [
@@ -250,6 +253,7 @@ describe("Managing methods", function(){
       return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
     });
   });
+  */
   it("should list all solutions for users", function(){
     return test.load({
       Solutions: [
