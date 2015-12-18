@@ -178,9 +178,37 @@ module.exports = (con,config) ->
       )
 
     storeTestResults: (sid, resultArray) ->
-      rdb.table("Solutions").get(sid).update((solution) ->
-        return solution.row("tasks").merge(rdb.expr(resultArray))
+      rdb.table("Solutions").get(sid).update(
+        tasks: rdb.table("Solutions").get(sid)("tasks").map(rdb.expr(resultArray), (solution, tests) ->
+          return {
+            solution: solution("solution"),
+            tests: tests("tests")
+          }
+        ), {nonAtomic: true}
       ).run con
+
+      ###
+      rdb.do(rdb.table("Solutions").get(sid), (solution) ->
+        rdb.table("Solutions").get(sid).update(
+          tasks: solution("tasks").merge(rdb.expr(resultArray))
+        )
+      ).run con
+      ###
+      ###
+      rdb.table("Solutions").get(sid).run(con).then((solution) ->
+        rdb.table("Solutions").get(sid).update(
+          tasks: _.merge(solution.tasks, resultArray.tasks)
+        ).run con
+      )
+      ###
+      ###
+      rdb.table("Solutions").get(sid).update(
+        tasks: rdb.table("Solutions").get(sid)("tasks").map( (v) ->
+          # this is wrong, i know
+          v.merge(resultArray)
+        ), {nonAtomic: true}
+      ).run con
+      ###
 
     storeSolution: (sid) ->
       API.storeSingleSolutionQuery(sid).run con
