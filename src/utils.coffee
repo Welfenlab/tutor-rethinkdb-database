@@ -12,7 +12,7 @@ tables =
   PseudonymList: ["pseudonym", "user"]
   session: "id"
   ShareJsTable: "id"
-  Jobs: ["id", "name", "data", "type"]
+  Jobs: ["id", "name", "data", "type"] # data = node-schedule cron-type
 
 module.exports =
   toArray: (promise) ->
