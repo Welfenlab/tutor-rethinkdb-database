@@ -59,11 +59,14 @@ module.exports = (con,config) ->
         s("id").match(solution_id)).without("pdf").limit(10).coerceTo('array').run(con)
 
     # Also stores the last sharejs data
-    lockSpecificSolutionForPdfProcessor: (id) ->
+    lockSpecificSolutionForPdfProcessorQuery: (id) ->
       rdb.do(
         API.storeSolution(id),
         rdb.table("Solutions").get(id).update({"processingLock": true}, {returnChanges: true})
       )
+
+    lockSpecificSolutionForPdfProcessor: (id) ->
+      API.lockSpecificSolutionForPdfProcessorQuery(id).run con;
 
     ############################################################################
     # Locks a single solution which is due.
@@ -89,7 +92,7 @@ module.exports = (con,config) ->
         ).sample(1).nth(0).default(null), (solution) ->
           rdb.branch(
             rdb.expr(solution).ne(null),
-            API.lockSpecificSolutionForPdfProcessor(solution("left")("id")).do(
+            API.lockSpecificSolutionForPdfProcessorQuery(solution("left")("id")).do(
               rdb.expr(solution)("left")
             ),
             rdb.expr(solution) # return null
@@ -132,84 +135,55 @@ module.exports = (con,config) ->
       rdb.table("Solutions").get(solutionId).pluck(rdb.args(pluckArr)).run con
 
     # Store all solutions that are due and haven't been stored yet.
+    # This is expensive
     storeAllFinalSolutions: () ->
-      (rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises")).filter(
-        # has not been stored before
-        rdb.row("left")("finalSolutionStored")
-        .default(false)
-        .eq(false)
-        .and(rdb.row("right")("dueDate").lt(rdb.now()))
-      ).map ( (solution) ->
-        solution.merge({
-          finalSolutionStored: true,
-          tasks: solution("right")("tasks").map( (task) ->
-            rdb
-            .db(config.sharejs.rethinkdb.db)
-            .table(config.sharejs.tableName)
-            .get(
-              rdb.add(
-                solution("left")("group").coerceTo("string"),
-                ":",
-                solution("left")("exercise").coerceTo("string"),
-                ":",
-                task("number").coerceTo("string")
-              )
-            )
-          )
-        })
-      )).coerceTo("array").run con
+      API.storeAllSolutions(true)
 
-    # Stores just one final solution, for load balancing
-    storeFinalSolutionSample: () ->
-      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises")).filter(
-        rdb.row("left")("finalSolutionStored")
-        .default(false)
-        .eq(false)
-        .and(rdb.row("right")("dueDate").lt(rdb.now()))
-      ).sample(1).map( (solution) ->
-        solution.merge({
-          finalSolutionStored: true,
-          tasks: solution("right")("tasks").map( (task) ->
-            rdb
-            .db(config.sharejs.rethinkdb.db)
-            .table(config.sharejs.tableName)
-            .get(
-              rdb.add(
-                solution("left")("group").coerceTo("string"),
-                ":",
-                solution("left")("exercise").coerceTo("string"),
-                ":",
-                task("number").coerceTo("string")
-              )
+    storeAllSolutions: (filterFinal) ->
+      q = rdb.table("Solutions")
+      if (filterFinal)
+        q = q.filter((s) ->
+          s("dueDate").lt(rdb.now()).and(s("finalSolutionStored").default(false).eq(false))
+        )
+
+      q.forEach((solution) -> API.storeSingleSolutionQuery(solution("id"), filterFinal)).run con
+
+    solutionStoreUpdate: (solution) ->
+      #finalSolutionStored: rdb.table("Exercises").get(solution("right")("id")),
+      lastStore: rdb.now(),
+      finalSolutionStored: solution("right")("dueDate").lt(rdb.now()),
+      tasks: solution("right")("tasks").map( (task) ->
+        solution:
+          rdb
+          .db(config.sharejs.rethinkdb.db)
+          .table(config.sharejs.tableName)
+          .get(
+            rdb.add(
+              solution("left")("group").coerceTo("string"),
+              ":",
+              solution("left")("exercise").coerceTo("string"),
+              ":",
+              task("number").coerceTo("string")
             )
-          )
-        })
-      ).run con
+          )("_data").default(null)
+      )
 
     # Store just one solution, does not perform checkings and is meant to be used for admins.
+    storeSingleSolutionQuery: (sid, filterFinal) ->
+      rdb.table("Solutions").get(sid).update(
+        API.solutionStoreUpdate(
+          rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises"))
+          .filter((solution) -> solution("left")("id").eq(sid)).nth(0)
+        ), {nonAtomic: true}
+      )
+
+    storeTestResults: (sid, resultArray) ->
+      rdb.table("Solutions").get(sid).update(
+        tasks: rdb.merge(rdb.row("tasks"), rdb.expr(resultArray))
+      ).run con
+
     storeSolution: (sid) ->
-      rdb.table("Solutions").eqJoin("exercise", rdb.table("Exercises"))
-      .filter((solution) -> solution("left")("id").eq(sid))
-      .map( (solution) ->
-        solution.merge({
-          #finalSolutionStored: rdb.table("Exercises").get(solution("right")("id")),
-          finalSolutionStored: solution("right")("dueDate").lt(rdb.now()),
-          tasks: solution("right")("tasks").map( (task) ->
-            rdb
-            .db(config.sharejs.rethinkdb.db)
-            .table(config.sharejs.tableName)
-            .get(
-              rdb.add(
-                solution("left")("group").coerceTo("string"),
-                ":",
-                solution("left")("exercise").coerceTo("string"),
-                ":",
-                task("number").coerceTo("string")
-              )
-            )
-          )
-        })
-      ).coerceTo('array')
+      API.storeSingleSolutionQuery(sid).run con
 
     ############################################################################
     # UpdateOldestSolution copies the sharejs data over into the solution table
