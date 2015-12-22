@@ -18,12 +18,6 @@ var newDb = function(cb){
         port: "28015",
         name: dbName,
       },
-      sharejs: {
-        tableName: "ShareJsTable",
-        rethinkdb: {
-          db: dbName
-        }
-      },
       maxSolutionLocks: 10
   };
 
@@ -40,7 +34,7 @@ var newDb = function(cb){
     return utils.init(con, config);
   };
   var startTest = function(){
-    api = rdbAPI(con, config)
+    var api = rdbAPI(con, config)
 
     api.con = con;
     api.dbName = dbName;

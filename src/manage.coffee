@@ -155,8 +155,7 @@ module.exports = (con,config) ->
       tasks: solution("right")("tasks").map( (task) ->
         solution:
           rdb
-          .db(config.sharejs.rethinkdb.db)
-          .table(config.sharejs.tableName)
+          .table("ShareJS")
           .get(
             rdb.add(
               solution("left")("group").coerceTo("string"),
@@ -222,9 +221,6 @@ module.exports = (con,config) ->
     ############################################################################
     updateOldestSolution: (minAge) ->
       minAge = minAge or 300
-      if !config.sharejs?.rethinkdb?.db?
-        return Promise.reject "No sharejs database defined"
-
       rdb.do(
         rdb.table("Solutions")
           .orderBy({index: "lastStore"})
@@ -244,8 +240,8 @@ module.exports = (con,config) ->
                 # left = Solutions
                 # right = Exercises
                 # id = group : exercise : task("number")
-                rdb.db(config.sharejs.rethinkdb.db)
-                  .table(config.sharejs.tableName)
+                rdb
+                  .table("ShareJS")
                   .get(
                     rdb.add(oldest("left")("group").coerceTo("string"),":",oldest("right")("id").coerceTo("string"),":",task("number").coerceTo("string"))
                   ).pluck("_data")
@@ -274,8 +270,8 @@ module.exports = (con,config) ->
               # left = Solutions
               # right = Exercises
               # id = group : exercise : task("number")
-              rdb.db(config.sharejs.rethinkdb.db)
-                .table(config.sharejs.tableName)
+              rdb
+                .table('ShareJS')
                 .get(
                   rdb.add(oldest("left")("group").coerceTo("string"),":",oldest("right")("id").coerceTo("string"),":",task("number").coerceTo("string"))
                 ).pluck("_data")

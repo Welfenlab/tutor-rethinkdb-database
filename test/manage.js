@@ -124,7 +124,7 @@ describe("Managing methods", function(){
           id: 3
         }
       ],
-      ShareJsTable: [
+      ShareJS: [
         {id: "16:1:1"},
         {id: "16:1:2"}
       ]
@@ -175,7 +175,7 @@ describe("Managing methods", function(){
       Users: [
         {id:4096, pseudonym: "Slick Dijkstra"}
       ],
-      ShareJsTable: [{id:"16:1:1", _data:""}]
+      ShareJS: [{id:"16:1:1", _data:""}]
     })
     .then(function() {
       return test.db.Manage.updateOldestSolution(300).then(function(results) {
@@ -225,7 +225,7 @@ describe("Managing methods", function(){
       Users: [
         {id:4096, pseudonym: "Slick Dijkstra"}
       ],
-      ShareJsTable: [{id:"16:1:1", _data:""}]
+      ShareJS: [{id:"16:1:1", _data:""}]
     })
     .then(function() {
       return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
@@ -247,7 +247,7 @@ describe("Managing methods", function(){
       Users: [
         {id:4096, pseudonym: "Slick Dijkstra"}
       ],
-      ShareJsTable: [{id:"16:1:1", _data:""}]
+      ShareJS: [{id:"16:1:1", _data:""}]
     })
     .then(function() {
       return test.db.Manage.storeFinalSolutionSample().should.be.fulfilled;
@@ -312,7 +312,7 @@ describe("Managing methods", function(){
           processed: true
         }
       ],
-      ShareJsTable: [
+      ShareJS: [
         {id: "16:1:1"},
         {id: "16:1:2"}
       ]

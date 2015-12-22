@@ -11,7 +11,7 @@ tables =
   Tutors: "name"
   PseudonymList: ["pseudonym", "user"]
   session: "id"
-  ShareJsTable: "id"
+  ShareJS: "id"
   Jobs: ["id", "name", "data", "type"] # data = node-schedule cron-type
 
 module.exports =
