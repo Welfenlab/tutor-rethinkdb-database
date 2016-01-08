@@ -50,9 +50,7 @@ module.exports = (con,config) ->
       utils.toArray rdb.table("Groups").run(con)
 
     getStudentsSolutions: (user_id) ->
-      (Group.getGroupForUser(user_id)).then (group) ->
-        rdb.table("Solutions").getAll(group.id, {index: "group"}).coerceTo('array')
-        .without("pdf").run(con)
+      rdb.table("Users").get(user_id)("solutions").run(con)
 
     querySolutions: (solution_id) ->
       rdb.table("Solutions").filter( (s) ->

@@ -267,7 +267,7 @@ describe("Managing methods", function(){
       ], Users: [
         {id: 1, pseudonym: "A", solutions: []},
         {id: 2, pseudonym: "B", solutions: [1]},
-        {id: 3, pseudonym: "C", solutions: [1, 2]}
+        {id: 3, pseudonym: "C", solutions: [3]}
       ]
     }).then(function(){
       return test.db.Manage.getStudentsSolutions(3).then(function(sols){
