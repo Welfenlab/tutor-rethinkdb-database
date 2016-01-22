@@ -5,7 +5,7 @@
   "main": "./lib/db.js",
   "scripts": {
     "test": "node node_modules/gulp/bin/gulp.js && node_modules/mocha/bin/mocha",
-    "prepublish": "node node_modules/gulp/bin/gulp.js && node_modules/mocha/bin/mocha"
+    "prepublish": "rm -rf ./lib && node node_modules/gulp/bin/gulp.js && node_modules/mocha/bin/mocha"
   },
   "devDependencies": {
     "chai": "^3.2.0",

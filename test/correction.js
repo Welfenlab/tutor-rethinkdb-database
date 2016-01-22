@@ -1,3 +1,4 @@
+/* global it */
 
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
@@ -145,6 +146,12 @@ describe("Correction methods", function(){
     return test.load({Solutions:[{id:1, lock:"tutor2"}]})
     .then(function(){
       return test.db.Corrections.setResultForExercise("tutor",1,["res"]).should.be.rejected;
+    });
+  });
+  it("should be possible to store for a solution locked by the tutor", function(){
+    return test.load({Solutions:[{id:1, lock:"tutor"}]})
+    .then(function(){
+      return test.db.Corrections.setResultForExercise("tutor",1,["res"]).should.be.fulfilled;
     });
   });
   it("should lock a solution for a tutor", function(){
@@ -322,5 +329,48 @@ describe("Correction methods", function(){
       });
     });
   });
+  
+  it('checks the results object for existence', function() {
+    return test.load({Solutions: [{id:1}]})
+    .then(function() {
+      return test.db.Corrections.checkResults(1).should.be.rejected
+    })
+  })
+  
+  it('checks that the results object has a points field', function() {
+    return test.load({Solutions: [{id:1,results:''}]})
+    .then(function() {
+      return test.db.Corrections.checkResults(1).should.be.rejected
+    })
+  })
+  
+  it('checks that the format of the points field is valid', function() {
+    var date = moment().subtract(1, "days").toJSON();
+    return test.load({Solutions: [{id:1,exercise:1,results:{points:["1"]}}],
+      Exercises: [{id:1,tasks:[1], activationDate: rdb.ISO8601(date)}]})
+    .then(function() {
+      return test.db.Corrections.checkResults(1).should.be.rejected
+    })
+  })
+  
+  it('should verify a valid results entry', function() {
+    var date = moment().subtract(1, "days").toJSON();
+    return test.load({Solutions: [{id:1,exercise:1,results:{points:[1,2]}}],
+      Exercises: [{id:1,tasks:[1,3], activationDate: rdb.ISO8601(date)}]})
+    .then(function() {
+      return test.db.Corrections.checkResults(1).should.be.fulfilled
+    })
+  })
+  
+  it('should verify a stored result', function() {
+    var date = moment().subtract(1, "days").toJSON();
+    return test.load({Solutions: [{id:1,exercise:1, lock: 'XY'}],
+      Exercises: [{id:1,tasks:[1,3], activationDate: rdb.ISO8601(date)}]})
+    .then(function() {
+      return test.db.Corrections.setResultForExercise("XY", 1, {pages:[],points:[1,2]}).then(function() {
+        return test.db.Corrections.checkResults(1)
+      }).should.be.fulfilled
+    })
+  })
   /**/
 });

@@ -97,7 +97,7 @@ module.exports = (con, config) ->
     setResultForExercise: (tutor, id, result) ->
       rdb.do(rdb.table("Solutions").get(id), (doc) ->
         rdb.branch(doc.hasFields("lock").and(doc("lock").eq(tutor)),
-          rdb.table("Solutions").get(id).update({result: result}),
+          rdb.table("Solutions").get(id).update({results: result}),
           rdb.error("Only locked solutions can be updated")
         )).run(con)
 
@@ -185,3 +185,25 @@ module.exports = (con, config) ->
         doc.hasFields("results")).count().run(con)
 
     lockSolutionForTutor: (tutor, id) -> lockSolutionForTutor(tutor, id)
+    
+    checkResults: (id) ->
+      API.getSolutionById(id)
+        .then( (sol) ->
+          isNumber = (n) -> typeof n is 'number'
+          if !sol.results
+            return Promise.reject 'Solution contains no result object'
+          if !sol.results.points || !Array.isArray(sol.results.points)
+            return Promise.reject 'Points in Solution must be an Array'
+          
+          numbers = _.filter sol.results.points, isNumber
+          if numbers.length != sol.results.points.length
+            return Promise.reject 'Not all points are stored as numbers'
+          return require('./exercises')(con, config).getById(sol.exercise).then( (e) ->
+            return {exercise: e, solution: sol}
+          )
+        )
+        .then((val) ->
+          if val.exercise.tasks.length != val.solution.results.points.length
+            return Promise.reject 'Task number does not match number of results. (Tasks: ' + val.exercise.tasks.length + ' , Results: ' + val.solution.results.points.length + ')'
+          return Promise.resolve()
+        )
