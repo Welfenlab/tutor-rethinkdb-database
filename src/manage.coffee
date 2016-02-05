@@ -56,6 +56,10 @@ module.exports = (con,config) ->
       rdb.table("Solutions").filter( (s) ->
         s("id").match(solution_id)).without("pdf").limit(10).coerceTo('array').run(con)
 
+    exerciseForSolution: (solution_id) ->
+      utils.first(rdb.table("Solutions").innerJoin(rdb.table("Exercises"), ((sol, ex) -> sol("exercise").eq(ex("id"))))
+        .filter((res) -> res('left')('id').eq(solution_id))('right').run(con))
+
     # Also stores the last sharejs data
     lockSpecificSolutionForPdfProcessorQuery: (id) ->
       rdb.do(
@@ -119,6 +123,18 @@ module.exports = (con,config) ->
           processed: true
           pdf: pdfData,
           pdfGenerationDate: rdb.now()
+        ),
+        rdb.table("Solutions").get(solutionId).replace((solution) ->
+          solution.without("processingLock")
+        )
+      ).run con
+    # Save the finished pdf file into the solution
+    insertCorrectedPdf: (solutionId, pdfData)->
+      rdb.do(
+        rdb.table("Solutions").get(solutionId).update(
+          corrected: true
+          correctedPDF: pdfData,
+          correctedPDFGenerationDate: rdb.now()
         ),
         rdb.table("Solutions").get(solutionId).replace((solution) ->
           solution.without("processingLock")

@@ -93,6 +93,14 @@ describe("Managing methods", function(){
       });
     });
   });
+  it('can get the exercise for a solution', function(){
+    return test.load({Solutions: [{id:1, exercise: 2}], Exercises: [{id: 1},{id: 2}]})
+    .then(function() {
+      return test.db.Manage.exerciseForSolution(1).then(function(ex) {
+        ex.id.should.equal(2)
+      })
+    })
+  });
   it("should copy over all final solutions ", function() {
     return test.load({
       Exercises: [
