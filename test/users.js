@@ -152,12 +152,12 @@ describe("User queries", function(){
   it("should get all points for a user", function(){
     return test.load(
       {Solutions:[
-        {id: 1, exercise: 1, group: 1, results:{points: 1},lock: "tutor",inProcess:false},
-        {id: 2, exercise: 1, group: 1, results:{points: 2},lock: "tutor",inProcess:false},
-        {id: 3, exercise: 2, group: 1, results:{points: 8},lock: "tutor",inProcess:false},
+        {id: 1, exercise: 1, group: 1, results:{points: [1]},lock: "tutor",inProcess:false},
+        {id: 2, exercise: 1, group: 1, results:{points: [2]},lock: "tutor",inProcess:false},
+        {id: 3, exercise: 2, group: 1, results:{points: [8]},lock: "tutor",inProcess:false},
         {id: 4, exercise: 2, group: 1, lock:"blubb",inProcess:true},
-        {id: 5, exercise: 2, group: 1, results:{points: 16},lock:"blubb",inProcess:true},
-        {id: 6, exercise: 1, group: 2, results:{points: 4},lock: "tutor",inProcess:false},
+        {id: 5, exercise: 2, group: 1, results:{points: [16]},lock:"blubb",inProcess:true},
+        {id: 6, exercise: 1, group: 2, results:{points: [4]},lock: "tutor",inProcess:false},
         {id: 7, exercise: 1, group: 2},
         {id: 8, exercise: 2, group: 2}
       ],

@@ -47,7 +47,7 @@ module.exports = (con, config) ->
           solution.hasFields("results").and(solution.hasFields(results: 'points')).and(solution("inProcess").eq(false))
         )
         .map( (solution) ->
-          solution("results")("points").default(0)
+          solution("results")("points").sum().default(0)
         ).sum().default(0),
         rdb.expr(0)
       )

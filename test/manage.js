@@ -327,8 +327,8 @@ describe("Managing methods", function(){
   it("should list users", function() {
     return test.load({
       Solutions: [
-        {id: 1, exercise: 1, group: 1, results:{points: 4}, inProcess: false},
-        {id: 2, exercise: 1, group: 1, results:{points: 12}, inProcess: false}
+        {id: 1, exercise: 1, group: 1, results:{points: [4]}, inProcess: false},
+        {id: 2, exercise: 1, group: 1, results:{points: [12]}, inProcess: false}
       ],
       Groups: [
         {id: 100, users: [1, 2], pendingUsers:[]},
