@@ -18,6 +18,7 @@ var newDb = function(cb){
         port: "28015",
         name: dbName,
       },
+      document: "ShareJS",
       maxSolutionLocks: 10
   };
 

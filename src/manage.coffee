@@ -170,7 +170,7 @@ module.exports = (con,config) ->
       tasks: solution("right")("tasks").map( (task) ->
         solution:
           rdb
-          .table("ShareJS")
+          .table(config.document)
           .get(
             rdb.add(
               solution("left")("group").coerceTo("string"),
@@ -256,7 +256,7 @@ module.exports = (con,config) ->
                 # right = Exercises
                 # id = group : exercise : task("number")
                 rdb
-                  .table("ShareJS")
+                  .table(config.document)
                   .get(
                     rdb.add(oldest("left")("group").coerceTo("string"),":",oldest("right")("id").coerceTo("string"),":",task("number").coerceTo("string"))
                   ).pluck("_data")
