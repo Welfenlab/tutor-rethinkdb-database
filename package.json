@@ -1,6 +1,6 @@
 {
   "name": "@tutor/rethinkdb-database",
-  "version": "0.5.35",
+  "version": "0.5.36",
   "description": "Persistent implementation of a rethink database.",
   "main": "./lib/db.js",
   "scripts": {
