@@ -167,3 +167,6 @@ module.exports = (con, config) ->
 
     getSolutions: () ->
       rdb.table("Solutions").coerceTo('array').run(con)
+
+    getCorrectedPDFForID: (id) ->
+      utils.getFirstKey "correctedPDF", rdb.table("Solutions").get(id).run(con)
