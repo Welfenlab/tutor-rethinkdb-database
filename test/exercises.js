@@ -394,4 +394,32 @@ describe("Student Exercise Queries", function(){
     });
   });
 
+  it("can return the pdf for an exercise and a user", function(){
+    return test.load({Solutions:[
+      {group:"A", exercise: 1, pdf: 'testPDF', id: 1}
+    ], Users: [
+      {id: 1, pseudonym: 1, solutions: [1]}
+    ]
+    })
+    .then(function(){
+      return test.db.Exercises.getPDFForID(1,1).then(function(pdf){
+        pdf.should.equal('testPDF')
+      });
+    });
+  });
+
+  it("can return the pdf for an exercise and a user", function(){
+    return test.load({Solutions:[
+      {group:"A", exercise: 1, correctedPDF: 'testPDF', id: 1}
+    ], Users: [
+      {id: 1, pseudonym: 1, solutions: [1]}
+    ]
+    })
+    .then(function(){
+      return test.db.Exercises.getCorrectedPDFForID(1,1).then(function(pdf){
+        pdf.should.equal('testPDF')
+      });
+    });
+  });
+
 });

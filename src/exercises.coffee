@@ -168,5 +168,16 @@ module.exports = (con, config) ->
     getSolutions: () ->
       rdb.table("Solutions").coerceTo('array').run(con)
 
-    getCorrectedPDFForID: (id) ->
-      utils.getFirstKey "correctedPDF", rdb.table("Solutions").get(id).run(con)
+    getPDFForID: (user_id, exercise_id) ->
+      rdb.table("Users").get(user_id)('solutions').map((sid) ->
+          rdb.table("Solutions").get(sid)
+        ).filter((sol) ->
+          sol('exercise').eq(exercise_id)
+        )('pdf').nth(0).run(con)
+
+    getCorrectedPDFForID: (user_id, exercise_id) ->
+      rdb.table("Users").get(user_id)('solutions').map((sid) ->
+          rdb.table("Solutions").get(sid)
+        ).filter((sol) ->
+          sol('exercise').eq(exercise_id)
+        )('correctedPDF').nth(0).run(con)
