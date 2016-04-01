@@ -92,37 +92,32 @@ module.exports = (con, config) ->
 
   API =
     get: ->
-      rdb.table('Exercises').filter( (ex) -> ex('activationDate').lt new Date() )
-        .coerceTo('array').run(con).then (e) ->
-          new Promise (resolve, reject) ->
-            _.forEach e, (n, k) ->
-              e[k].tasks = _.map n.tasks, (n) ->
-                delete n.solution
-                delete n.solutionTest
-                delete n.internals
-                n
-            resolve e
+      rdb.table('Exercises')
+      .without("internals")
+      .without(tasks: ['solution', 'solutionTests', 'internals'])
+      .filter((ex) -> ex('activationDate').lt new Date())
+        .coerceTo('array').run(con)
 
     getById: (id)->
-      rdb.table('Exercises').get(id).run(con).then (e) ->
+      rdb.table("Exercises").get(id)
+      .without('internals')
+      .without(tasks: ['solution', 'solutionTests', 'internals'])
+      .run(con).then (e) ->
         new Promise (resolve, reject) ->
           if (moment().isAfter e.activationDate)
-            e.tasks = _.map e.tasks, (n) ->
-              delete n.solution
-              delete n.solutionTest
-              delete n.internals
-              n
             resolve e
           else
             reject "Exercise with id #{id} not found"
 
     getAllActive: ->
-      utils.toArray(rdb.table('Exercises').filter( (ex) ->
+      utils.toArray(rdb.table('Exercises').filter((ex) ->
         ex('activationDate').lt(new Date())
-        .and(ex('dueDate').gt new Date()) ).without("solutions").without('solutionTest').without('internals').run(con))
-    
+        .and(ex('dueDate').gt new Date())
+      ).without('internals')
+      .without(tasks: ['solution', 'solutionTests', 'internals']).run(con))
+
     isActive: (id) ->
-      utils.nonEmptyList(rdb.table("Exercises").getAll(id).filter( (ex) ->
+      utils.nonEmptyList(rdb.table("Exercises").getAll(id).filter((ex) ->
         ex('activationDate').lt(new Date())
         .and(ex('dueDate').gt new Date())).run(con))
 

@@ -81,20 +81,19 @@ describe("Student Exercise Queries", function(){
     return test.load(
     {
       Exercises:[
-        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
-          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTest: {}, solution: {}},
+        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()), internals: 's3cr3t', tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTests: {}, solution: {}, internals: 's3cr3t'},
           {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
-          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTest: {}}
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTests: {}}
         ]}
       ]
     }).then(function() {
       return test.db.Exercises.getById(1).then(function(ex){
         (Array.isArray(ex)).should.be.false;
-        ex.id.should.equal(1);
-        //ex.tasks.should.all.not.have.key("solution");
+        ex.id.should.equal(1);'solutionTest'
         for (var i = 0; i != ex.tasks.length; ++i) {
           ex.tasks[i].should.not.have.key("solution");
-          ex.tasks[i].should.not.have.key("solutionTest");
+          ex.tasks[i].should.not.have.key("solutionTests");
           ex.tasks[i].should.not.have.key("internals");
         }
       });
@@ -114,28 +113,29 @@ describe("Student Exercise Queries", function(){
     return test.load(
     {
       Exercises:[
-        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
-          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}},
+        {id:1,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()), internals: 's3cr3t',tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, internals: 's3cr3t'},
           {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
           {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solution: {}}
         ]},
         {id:2,activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),tasks:[
-          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTest: {}, solution: {}},
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTests: {}, solution: {}},
           {title: 'def', maxPoints: 12, text: 'You should too!', prefilled: {title: 'title 2', content: 'content 2'}, solution: {}},
-          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTest: {}}
+          {title: 'ghi', maxPoints: 15, text: 'You should also!', prefilled: {title: 'title 3', content: 'content 3'}, solutionTests: {}}
         ]}
       ]
     }).then(function(){
       return test.db.Exercises.get().then(function(ex){
         (Array.isArray(ex)).should.be.true;
         ex.should.have.length(2);
+        ex.should.not.have.key('internals');
 
         // note for future readers:
         // chai-things solution did not work
         for (var j = 0; j != ex.length; ++j)
           for (var i = 0; i != ex[j].tasks.length; ++i) {
             ex[j].tasks[i].should.not.have.key("solution");
-            ex[j].tasks[i].should.not.have.key("solutionTest");
+            ex[j].tasks[i].should.not.have.key("solutionTests");
             ex[j].tasks[i].should.not.have.key("internals");
           }
       });
@@ -146,13 +146,18 @@ describe("Student Exercise Queries", function(){
     {
       Exercises:[
         {id:"abc",activationDate: rdb.ISO8601(moment().subtract(2, 'days').toJSON()),
-                  dueDate: rdb.ISO8601(moment().add(2, 'days').toJSON()),tasks:[],solutions:[]}
+        dueDate: rdb.ISO8601(moment().add(2, 'days').toJSON()), internals: 's3cr3t',tasks:[
+          {title: 'abc', maxPoints: 10, text: 'You should!', prefilled: {title: 'title 1', content: 'content 1'}, solutionTests: {}, solution: {}, internals: 's3cr3t'}
+        ]}
       ]
     }).then(function(){
       return test.db.Exercises.getAllActive().then(function(ex){
         (Array.isArray(ex)).should.be.true;
         ex.should.have.length(1)
-        ex[0].should.not.have.key("solutions");
+        ex.should.not.have.key('internals');
+        ex[0].tasks[0].should.not.have.key("solution");
+        ex[0].tasks[0].should.not.have.key("solutionTests");
+        ex[0].tasks[0].should.not.have.key("internals");
       });
     });
   });
